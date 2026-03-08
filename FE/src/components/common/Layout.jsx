@@ -16,35 +16,35 @@ function Layout({ children }) {
             <img src={logo} alt="Recall Loop" className="layout__logo-image" />
           </Link>
           <h1 className="layout__title">무한 학습의 순환</h1>
+
+          <nav className="layout__header-nav">
+            <ul className="layout__header-nav-list">
+              <li>
+                <Link
+                  to="/"
+                  className={`layout__header-nav-link ${isActive('/') ? 'layout__header-nav-link--active' : ''}`}
+                >
+                  <HomeIcon className="layout__header-nav-icon" />
+                  <span className="layout__header-nav-text">홈</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/queue"
+                  className={`layout__header-nav-link ${isActive('/queue') ? 'layout__header-nav-link--active' : ''}`}
+                >
+                  <QuizIcon className="layout__header-nav-icon" />
+                  <span className="layout__header-nav-text">문제 풀기</span>
+                </Link>
+              </li>
+            </ul>
+          </nav>
         </div>
       </header>
 
       <main className="layout__main">
         {children}
       </main>
-
-      <nav className="layout__nav">
-        <ul className="layout__nav-list">
-          <li className="layout__nav-item">
-            <Link
-              to="/"
-              className={`layout__nav-link ${isActive('/') ? 'layout__nav-link--active' : ''}`}
-            >
-              <HomeIcon className="layout__nav-icon" />
-              <span className="layout__nav-text">홈</span>
-            </Link>
-          </li>
-          <li className="layout__nav-item">
-            <Link
-              to="/queue"
-              className={`layout__nav-link ${isActive('/queue') ? 'layout__nav-link--active' : ''}`}
-            >
-              <QuizIcon className="layout__nav-icon" />
-              <span className="layout__nav-text">문제 풀기</span>
-            </Link>
-          </li>
-        </ul>
-      </nav>
     </div>
   )
 }

@@ -36,6 +36,11 @@ class QueueController(
             )
         )
     }
+
+    @PostMapping("/initialize")
+    fun initializeQueue(): ResponseEntity<QueueStatusResponse> {
+        return ResponseEntity.ok(queueService.initializeQueue())
+    }
 }
 
 data class SubmitAnswerRequest(

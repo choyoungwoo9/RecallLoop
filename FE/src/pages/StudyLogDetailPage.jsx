@@ -279,7 +279,7 @@ function StudyLogDetailPage() {
           <div className="study-log-detail__title-section">
             <h1 className="study-log-detail__title">{studyLog.title}</h1>
             <small className="study-log-detail__date">
-              📅 작성일: {new Date(studyLog.createdAt).toLocaleString('ko-KR')}
+              작성일: {new Date(studyLog.createdAt).toLocaleString('ko-KR')}
             </small>
           </div>
           <div className="study-log-detail__actions">

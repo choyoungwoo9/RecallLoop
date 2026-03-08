@@ -31,9 +31,9 @@ function StudyLogCard({ studyLog }) {
         </p>
 
         <div className="study-log-card__footer">
-          <span className="study-log-card__date">📅 {createdDate}</span>
+          <span className="study-log-card__date">{createdDate}</span>
           <span className="study-log-card__meta">
-            {studyLog.quizCount ? `📝 ${studyLog.quizCount}개` : '📝 0개'}
+            {studyLog.quizCount ? `${studyLog.quizCount}개 문제` : '0개 문제'}
           </span>
         </div>
       </div>
