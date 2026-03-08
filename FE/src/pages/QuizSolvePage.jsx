@@ -7,6 +7,7 @@ import Layout from '../components/common/Layout'
 import Button from '../components/common/Button'
 import Textarea from '../components/common/Textarea'
 import LoadingSpinner from '../components/common/LoadingSpinner'
+import { HomeIcon } from '../components/common/Icons'
 import useTimerStore from '../store/timerStore'
 import './QuizSolvePage.css'
 
@@ -140,7 +141,7 @@ function QuizSolvePage() {
     return (
       <Layout>
         <div className="quiz-solve__empty">
-          <div className="quiz-solve__empty-icon">❌</div>
+          <div className="quiz-solve__empty-icon" />
           <h2 className="quiz-solve__empty-title">풀 문제가 없습니다</h2>
           <p className="quiz-solve__empty-text">
             먼저 학습 기록을 생성하고 문제를 만들어주세요
@@ -150,7 +151,7 @@ function QuizSolvePage() {
             size="lg"
             onClick={() => navigate('/')}
           >
-            🏠 홈으로 돌아가기
+            홈으로 돌아가기
           </Button>
         </div>
       </Layout>
@@ -165,7 +166,7 @@ function QuizSolvePage() {
         {isCycleComplete && (
           <div className="quiz-solve__cycle-complete">
             <div className="quiz-solve__cycle-complete-content">
-              <h2>🎉 한 바퀴 완료!</h2>
+              <h2>한 바퀴 완료!</h2>
               <p>다시 처음부터 시작합니다</p>
             </div>
           </div>

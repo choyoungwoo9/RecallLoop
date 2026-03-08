@@ -295,7 +295,7 @@ function StudyLogDetailPage() {
               loading={deleting}
               disabled={deleting}
             >
-              🗑️ 삭제
+              삭제
             </Button>
           </div>
         </div>
@@ -305,7 +305,7 @@ function StudyLogDetailPage() {
             {
               id: 'content',
               label: '학습 내용',
-              icon: '📝',
+              icon: null,
               content: (
                 <Card className="study-log-detail__content-card">
                   <div className="study-log-detail__content">
@@ -317,7 +317,7 @@ function StudyLogDetailPage() {
             {
               id: 'quizzes',
               label: '생성된 문제',
-              icon: '🎯',
+              icon: null,
               content: (
                 <>
                   {quizzesLoading ? (
@@ -356,7 +356,7 @@ function StudyLogDetailPage() {
             {
               id: 'settings',
               label: '문제 생성 설정',
-              icon: '⚙️',
+              icon: null,
               content: (
                 <>
                   <Card className="study-log-detail__config-form-card">
@@ -408,7 +408,7 @@ function StudyLogDetailPage() {
                             <div>
                               <h4 className="study-log-detail__config-description">{config.description}</h4>
                               <small className="study-log-detail__config-count">
-                                📝 {config.questionCount}개 문제
+                                {config.questionCount}개 문제
                               </small>
                             </div>
                             <Button
@@ -427,7 +427,7 @@ function StudyLogDetailPage() {
                             loading={generatingQuizzes === config.id}
                             disabled={generatingQuizzes === config.id}
                           >
-                            🤖 문제 생성
+                            문제 생성
                           </Button>
                         </Card>
                       ))}

@@ -37,13 +37,12 @@ function StudyLogCreatePage() {
       <div className="study-log-create">
         <Card>
           <div className="study-log-create__header">
-            <h2 className="study-log-create__title">📝 새 학습 기록 작성</h2>
+            <h2 className="study-log-create__title">새 학습 기록 작성</h2>
             <p className="study-log-create__subtitle">학습한 내용을 정리하세요</p>
           </div>
 
           {error && (
             <div className="study-log-create__error">
-              <span>❌</span>
               <span>{error}</span>
             </div>
           )}
