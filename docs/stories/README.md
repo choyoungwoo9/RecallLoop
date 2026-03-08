@@ -6,3 +6,4 @@
 | 2 | 학습 기록 CRUD | DONE |
 | 3 | 문제 생성 설정 & Gemini 문제 생성 | DONE |
 | 4 | 순환 Queue 시스템 & 문제 풀이 | DONE |
+| 5 | FE UI/UX 리디자인 (모던 & 깔끔) | TODO |
