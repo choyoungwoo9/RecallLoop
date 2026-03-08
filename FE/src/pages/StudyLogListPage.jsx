@@ -5,6 +5,7 @@ import Layout from '../components/common/Layout'
 import Button from '../components/common/Button'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import StudyLogCard from '../components/studylog/StudyLogCard'
+import { BookIcon, PlusIcon } from '../components/common/Icons'
 import './StudyLogListPage.css'
 
 function StudyLogListPage() {
@@ -45,14 +46,25 @@ function StudyLogListPage() {
       <div className="study-log-list">
         <div className="study-log-list__header">
           <div className="study-log-list__title-section">
-            <h2 className="study-log-list__title">📚 내 학습 기록</h2>
+            <h2 className="study-log-list__title">내 학습 기록</h2>
             <p className="study-log-list__subtitle">학습한 내용을 정리하고 관리하세요</p>
           </div>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => navigate('/study-logs/new')}
+            className="study-log-list__create-btn"
+          >
+            <PlusIcon className="study-log-list__create-icon" />
+            새 학습 기록 작성
+          </Button>
         </div>
 
         {studyLogs.length === 0 ? (
           <div className="study-log-list__empty">
-            <div className="study-log-list__empty-icon">📝</div>
+            <div className="study-log-list__empty-icon">
+              <BookIcon />
+            </div>
             <h3 className="study-log-list__empty-title">학습 기록이 없습니다</h3>
             <p className="study-log-list__empty-text">
               새로운 학습 기록을 작성하여 시작해보세요!
@@ -62,27 +74,15 @@ function StudyLogListPage() {
               size="lg"
               onClick={() => navigate('/study-logs/new')}
             >
-              + 새 학습 기록 작성
+              새 학습 기록 작성
             </Button>
           </div>
         ) : (
-          <>
-            <div className="study-log-list__grid">
-              {studyLogs.map(log => (
-                <StudyLogCard key={log.id} studyLog={log} />
-              ))}
-            </div>
-
-            <div className="study-log-list__fab-container">
-              <button
-                className="study-log-list__fab"
-                onClick={() => navigate('/study-logs/new')}
-                title="새 학습 기록 작성"
-              >
-                ➕
-              </button>
-            </div>
-          </>
+          <div className="study-log-list__grid">
+            {studyLogs.map(log => (
+              <StudyLogCard key={log.id} studyLog={log} />
+            ))}
+          </div>
         )}
       </div>
     </Layout>

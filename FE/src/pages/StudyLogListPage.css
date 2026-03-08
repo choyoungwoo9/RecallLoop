@@ -12,12 +12,29 @@
 .study-log-list__header {
   padding: var(--spacing-lg) 0;
   border-bottom: 2px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
 }
 
 .study-log-list__title-section {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
+  flex: 1;
+}
+
+.study-log-list__create-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+.study-log-list__create-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .study-log-list__title {
@@ -57,8 +74,10 @@
 }
 
 .study-log-list__empty-icon {
-  font-size: 80px;
-  display: block;
+  width: 80px;
+  height: 80px;
+  color: var(--color-text-secondary);
+  opacity: 0.5;
 }
 
 .study-log-list__empty-title {

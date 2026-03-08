@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import logo from '../../assets/logo.svg'
+import { HomeIcon, QuizIcon } from './Icons'
 import './Layout.css'
 
 function Layout({ children }) {
@@ -29,7 +30,7 @@ function Layout({ children }) {
               to="/"
               className={`layout__nav-link ${isActive('/') ? 'layout__nav-link--active' : ''}`}
             >
-              <span className="layout__nav-icon">🏠</span>
+              <HomeIcon className="layout__nav-icon" />
               <span className="layout__nav-text">홈</span>
             </Link>
           </li>
@@ -38,7 +39,7 @@ function Layout({ children }) {
               to="/queue"
               className={`layout__nav-link ${isActive('/queue') ? 'layout__nav-link--active' : ''}`}
             >
-              <span className="layout__nav-icon">📋</span>
+              <QuizIcon className="layout__nav-icon" />
               <span className="layout__nav-text">문제 풀기</span>
             </Link>
           </li>
