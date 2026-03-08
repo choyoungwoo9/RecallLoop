@@ -18,6 +18,7 @@ function QuizSolvePage() {
   const [completedStudyLog, setCompletedStudyLog] = useState(null)
   const [isCycleComplete, setIsCycleComplete] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const [pendingCycleComplete, setPendingCycleComplete] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const timerInterval = useTimerStore((state) => state.timerInterval)
   const startTimer = useTimerStore((state) => state.startTimer)
@@ -75,12 +76,14 @@ function QuizSolvePage() {
         elapsedSeconds: elapsedSeconds
       })
 
+      // completedStudyLog가 있으면 먼저 모달을 표시하고, 나중에 처리
       if (result.completedStudyLog) {
         setCompletedStudyLog(result.completedStudyLog)
         setShowModal(true)
-      }
-
-      if (result.isCycleComplete) {
+        setPendingCycleComplete(result.isCycleComplete)
+        setSubmitting(false)
+      } else if (result.isCycleComplete) {
+        // completedStudyLog가 없고 cycleComplete만 있으면 배너 표시
         setIsCycleComplete(true)
         setTimeout(() => {
           setIsCycleComplete(false)
@@ -104,7 +107,18 @@ function QuizSolvePage() {
     if (action === 'view') {
       navigate(`/study-logs/${completedStudyLog.id}`)
     } else {
-      await loadCurrentQuiz()
+      // "계속 풀기" 선택
+      if (pendingCycleComplete) {
+        // 사이클 완료 배너를 보여줌
+        setIsCycleComplete(true)
+        setPendingCycleComplete(false)
+        setTimeout(() => {
+          setIsCycleComplete(false)
+          loadCurrentQuiz()
+        }, 2000)
+      } else {
+        await loadCurrentQuiz()
+      }
     }
   }
 
