@@ -1,0 +1,26 @@
+# BE
+BE/build/
+BE/.gradle/
+BE/data/*.db
+BE/data/*.db-shm
+BE/data/*.db-wal
+*.class
+*.jar
+!BE/gradle/wrapper/gradle-wrapper.jar
+
+# FE
+FE/node_modules/
+FE/dist/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
