@@ -3,6 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { getStudyLog, deleteStudyLog } from '../api/studyLog'
 import { getQuizConfigs, createQuizConfig, deleteQuizConfig, generateQuizzes } from '../api/quizConfig'
 import { getQuizzesByStudyLog, deleteQuiz } from '../api/quiz'
+import Layout from '../components/common/Layout'
+import Button from '../components/common/Button'
+import Input from '../components/common/Input'
+import Textarea from '../components/common/Textarea'
+import Card from '../components/common/Card'
+import LoadingSpinner from '../components/common/LoadingSpinner'
+import './StudyLogDetailPage.css'
 
 function StudyLogDetailPage() {
   const { id } = useParams()
@@ -135,162 +142,170 @@ function StudyLogDetailPage() {
     }
   }
 
-  if (loading) return <div>로딩 중...</div>
+  if (loading) return (
+    <Layout>
+      <LoadingSpinner />
+    </Layout>
+  )
+
   if (error) return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-      <div style={{ color: 'red', marginBottom: '16px' }}>{error}</div>
-      <button onClick={() => navigate('/')} style={{ padding: '8px 16px' }}>목록으로</button>
-    </div>
+    <Layout>
+      <div className="study-log-detail__error">
+        <div className="study-log-detail__error-message">❌ {error}</div>
+        <Button onClick={() => navigate('/')}>목록으로</Button>
+      </div>
+    </Layout>
   )
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0 }}>{studyLog.title}</h1>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{ padding: '8px 16px', backgroundColor: '#9E9E9E', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-          >
-            목록으로
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            style={{ padding: '8px 16px', backgroundColor: '#F44336', color: 'white', border: 'none', borderRadius: '4px', cursor: deleting ? 'not-allowed' : 'pointer' }}
-          >
-            {deleting ? '삭제 중...' : '삭제'}
-          </button>
-        </div>
-      </div>
-      <small style={{ color: '#999', display: 'block', marginBottom: '20px' }}>
-        작성일: {new Date(studyLog.createdAt).toLocaleString('ko-KR')}
-      </small>
-      <div style={{ border: '1px solid #eee', borderRadius: '8px', padding: '20px', backgroundColor: '#fafafa', whiteSpace: 'pre-wrap', lineHeight: '1.6', marginBottom: '30px' }}>
-        {studyLog.content}
-      </div>
-
-      <div style={{ marginBottom: '30px', borderTop: '2px solid #eee', paddingTop: '20px' }}>
-        <h2>문제 생성 설정</h2>
-
-        <div style={{ marginBottom: '20px', padding: '16px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
-          <div style={{ marginBottom: '12px' }}>
-            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold' }}>설명</label>
-            <textarea
-              value={newConfigDescription}
-              onChange={(e) => setNewConfigDescription(e.target.value)}
-              placeholder="예: 핵심 개념을 설명하는 문제를 만들어줘"
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd', fontFamily: 'inherit', minHeight: '80px' }}
-            />
+    <Layout>
+      <div className="study-log-detail">
+        <div className="study-log-detail__header">
+          <div className="study-log-detail__title-section">
+            <h1 className="study-log-detail__title">{studyLog.title}</h1>
+            <small className="study-log-detail__date">
+              📅 작성일: {new Date(studyLog.createdAt).toLocaleString('ko-KR')}
+            </small>
           </div>
-          <div style={{ marginBottom: '12px' }}>
-            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold' }}>생성할 문제 개수</label>
-            <input
-              type="number"
-              value={newConfigCount}
-              onChange={(e) => setNewConfigCount(Math.max(1, parseInt(e.target.value) || 1))}
-              min="1"
-              max="20"
-              style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd', width: '100px' }}
-            />
+          <div className="study-log-detail__actions">
+            <Button
+              variant="secondary"
+              onClick={() => navigate('/')}
+            >
+              ← 목록으로
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDelete}
+              loading={deleting}
+              disabled={deleting}
+            >
+              🗑️ 삭제
+            </Button>
           </div>
-          <button
-            onClick={handleCreateConfig}
-            disabled={creatingConfig}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: '#2196F3',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: creatingConfig ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {creatingConfig ? '생성 중...' : '설정 추가'}
-          </button>
         </div>
 
-        {configsLoading ? (
-          <div>설정 로딩 중...</div>
-        ) : quizConfigs.length === 0 ? (
-          <div style={{ color: '#999' }}>설정이 없습니다. 새로운 설정을 추가하세요.</div>
-        ) : (
-          <div>
-            {quizConfigs.map(config => (
-              <div key={config.id} style={{ marginBottom: '16px', padding: '16px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#fff' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <div>
-                    <h4 style={{ margin: '0 0 4px 0' }}>{config.description}</h4>
-                    <small style={{ color: '#999' }}>문제 개수: {config.questionCount}</small>
+        <Card className="study-log-detail__content-card">
+          <div className="study-log-detail__content">
+            {studyLog.content}
+          </div>
+        </Card>
+
+        <div className="study-log-detail__section">
+          <h2 className="study-log-detail__section-title">🎯 생성된 문제</h2>
+
+          {quizzesLoading ? (
+            <LoadingSpinner size="sm" text="문제 로딩 중..." />
+          ) : quizzes.length === 0 ? (
+            <div className="study-log-detail__empty">
+              <p>생성된 문제가 없습니다. 아래에서 설정을 추가하여 문제를 생성하세요.</p>
+            </div>
+          ) : (
+            <div className="study-log-detail__quizzes">
+              {quizzes.map((quiz, index) => (
+                <Card key={quiz.id} className="study-log-detail__quiz-card">
+                  <div className="study-log-detail__quiz-header">
+                    <div className="study-log-detail__quiz-number">Q{index + 1}</div>
+                    <p className="study-log-detail__quiz-text">{quiz.question}</p>
                   </div>
-                  <button
-                    onClick={() => handleDeleteConfig(config.id)}
-                    style={{ padding: '4px 12px', backgroundColor: '#ff9800', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                  >
-                    삭제
-                  </button>
-                </div>
-                <button
-                  onClick={() => handleGenerateQuizzes(config.id)}
-                  disabled={generatingQuizzes === config.id}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#4CAF50',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: generatingQuizzes === config.id ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  {generatingQuizzes === config.id ? '생성 중...' : '문제 생성'}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div style={{ borderTop: '2px solid #eee', paddingTop: '20px' }}>
-        <h2>생성된 문제</h2>
-        {quizzesLoading ? (
-          <div>문제 로딩 중...</div>
-        ) : quizzes.length === 0 ? (
-          <div style={{ color: '#999' }}>생성된 문제가 없습니다.</div>
-        ) : (
-          <div>
-            {quizzes.map(quiz => (
-              <div key={quiz.id} style={{ marginBottom: '12px', padding: '12px', border: '1px solid #e0e0e0', borderRadius: '8px', backgroundColor: '#fafafa' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: '0 0 6px 0' }}>
-                      <strong>Q{quiz.queueOrder}:</strong> {quiz.question}
-                    </p>
-                    <small style={{ color: '#999' }}>
+                  <div className="study-log-detail__quiz-footer">
+                    <small className="study-log-detail__quiz-date">
                       {new Date(quiz.createdAt).toLocaleString('ko-KR')}
                     </small>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDeleteQuiz(quiz.id)}
+                    >
+                      삭제
+                    </Button>
                   </div>
-                  <button
-                    onClick={() => handleDeleteQuiz(quiz.id)}
-                    style={{
-                      padding: '4px 12px',
-                      backgroundColor: '#F44336',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      marginLeft: '8px',
-                      flexShrink: 0
-                    }}
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="study-log-detail__section">
+          <h2 className="study-log-detail__section-title">⚙️ 문제 생성 설정</h2>
+
+          <Card className="study-log-detail__config-form-card">
+            <div className="study-log-detail__form-group">
+              <Textarea
+                label="설명"
+                value={newConfigDescription}
+                onChange={(e) => setNewConfigDescription(e.target.value)}
+                placeholder="예: 핵심 개념을 설명하는 문제를 만들어줘"
+                rows={4}
+                size="md"
+              />
+            </div>
+
+            <div className="study-log-detail__form-group">
+              <Input
+                label="생성할 문제 개수"
+                type="number"
+                value={newConfigCount}
+                onChange={(e) => setNewConfigCount(Math.max(1, parseInt(e.target.value) || 1))}
+                min="1"
+                max="20"
+                size="sm"
+              />
+            </div>
+
+            <Button
+              variant="info"
+              size="md"
+              onClick={handleCreateConfig}
+              loading={creatingConfig}
+              disabled={creatingConfig}
+            >
+              설정 추가
+            </Button>
+          </Card>
+
+          {configsLoading ? (
+            <LoadingSpinner size="sm" text="설정 로딩 중..." />
+          ) : quizConfigs.length === 0 ? (
+            <div className="study-log-detail__empty">
+              <p>설정이 없습니다. 새로운 설정을 추가하세요.</p>
+            </div>
+          ) : (
+            <div className="study-log-detail__configs">
+              {quizConfigs.map(config => (
+                <Card key={config.id} className="study-log-detail__config-card">
+                  <div className="study-log-detail__config-header">
+                    <div>
+                      <h4 className="study-log-detail__config-description">{config.description}</h4>
+                      <small className="study-log-detail__config-count">
+                        📝 {config.questionCount}개 문제
+                      </small>
+                    </div>
+                    <Button
+                      variant="warning"
+                      size="sm"
+                      onClick={() => handleDeleteConfig(config.id)}
+                    >
+                      삭제
+                    </Button>
+                  </div>
+                  <Button
+                    variant="success"
+                    size="md"
+                    className="study-log-detail__generate-btn"
+                    onClick={() => handleGenerateQuizzes(config.id)}
+                    loading={generatingQuizzes === config.id}
+                    disabled={generatingQuizzes === config.id}
                   >
-                    삭제
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                    🤖 문제 생성
+                  </Button>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </Layout>
   )
 }
 

@@ -1,0 +1,103 @@
+/* ============================================
+   Study Log Create Page Styles
+   ============================================ */
+
+.study-log-create {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.study-log-create__header {
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+}
+
+.study-log-create__title {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.study-log-create__subtitle {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+/* Error Message */
+.study-log-create__error {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  background-color: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--color-error);
+  font-weight: var(--font-weight-medium);
+  animation: slideInDown var(--transition-base);
+}
+
+.study-log-create__error span:first-child {
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+}
+
+/* Form */
+.study-log-create__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* Actions */
+.study-log-create__actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.study-log-create__actions button {
+  flex: 1;
+  max-width: 200px;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+/* Mobile: 375px - 640px */
+@media (max-width: 640px) {
+  .study-log-create {
+    max-width: 100%;
+  }
+
+  .study-log-create__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .study-log-create__subtitle {
+    font-size: var(--font-size-sm);
+  }
+
+  .study-log-create__actions {
+    flex-direction: column;
+  }
+
+  .study-log-create__actions button {
+    max-width: none;
+    width: 100%;
+  }
+}
+
+/* Tablet: 641px - 1024px */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .study-log-create {
+    max-width: 600px;
+  }
+}

@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { getStudyLogs } from '../api/studyLog'
+import Layout from '../components/common/Layout'
+import Button from '../components/common/Button'
+import LoadingSpinner from '../components/common/LoadingSpinner'
+import StudyLogCard from '../components/studylog/StudyLogCard'
+import './StudyLogListPage.css'
 
 function StudyLogListPage() {
   const [studyLogs, setStudyLogs] = useState([])
@@ -20,49 +25,67 @@ function StudyLogListPage() {
       })
   }, [])
 
-  if (loading) return <div>로딩 중...</div>
-  if (error) return <div>에러: {error}</div>
+  if (loading) return (
+    <Layout>
+      <LoadingSpinner />
+    </Layout>
+  )
+
+  if (error) return (
+    <Layout>
+      <div className="error-container">
+        <div className="error-message">❌ 에러: {error}</div>
+        <Button onClick={() => window.location.reload()}>다시 시도</Button>
+      </div>
+    </Layout>
+  )
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1>학습 기록 목록</h1>
-        <div>
-          <button
-            onClick={() => navigate('/study-logs/new')}
-            style={{ marginRight: '10px', padding: '8px 16px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-          >
-            새 기록 작성
-          </button>
-          <Link to="/queue" style={{ padding: '8px 16px', backgroundColor: '#2196F3', color: 'white', borderRadius: '4px', textDecoration: 'none' }}>문제 풀기</Link>
+    <Layout>
+      <div className="study-log-list">
+        <div className="study-log-list__header">
+          <div className="study-log-list__title-section">
+            <h2 className="study-log-list__title">📚 내 학습 기록</h2>
+            <p className="study-log-list__subtitle">학습한 내용을 정리하고 관리하세요</p>
+          </div>
         </div>
-      </div>
-      {studyLogs.length === 0 ? (
-        <p>학습 기록이 없습니다. 새 기록을 작성해보세요!</p>
-      ) : (
-        <div>
-          {studyLogs.map(log => (
-            <div
-              key={log.id}
-              onClick={() => navigate(`/study-logs/${log.id}`)}
-              style={{
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                padding: '16px',
-                marginBottom: '12px',
-                cursor: 'pointer',
-                backgroundColor: '#fff',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}
+
+        {studyLogs.length === 0 ? (
+          <div className="study-log-list__empty">
+            <div className="study-log-list__empty-icon">📝</div>
+            <h3 className="study-log-list__empty-title">학습 기록이 없습니다</h3>
+            <p className="study-log-list__empty-text">
+              새로운 학습 기록을 작성하여 시작해보세요!
+            </p>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => navigate('/study-logs/new')}
             >
-              <h3 style={{ margin: '0 0 8px 0' }}>{log.title}</h3>
-              <p style={{ margin: '0 0 8px 0', color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.content}</p>
-              <small style={{ color: '#999' }}>{new Date(log.createdAt).toLocaleDateString('ko-KR')}</small>
+              + 새 학습 기록 작성
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="study-log-list__grid">
+              {studyLogs.map(log => (
+                <StudyLogCard key={log.id} studyLog={log} />
+              ))}
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+
+            <div className="study-log-list__fab-container">
+              <button
+                className="study-log-list__fab"
+                onClick={() => navigate('/study-logs/new')}
+                title="새 학습 기록 작성"
+              >
+                ➕
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </Layout>
   )
 }
 

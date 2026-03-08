@@ -1,0 +1,208 @@
+/* ============================================
+   Study Log List Page Styles
+   ============================================ */
+
+.study-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  width: 100%;
+}
+
+.study-log-list__header {
+  padding: var(--spacing-lg) 0;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.study-log-list__title-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.study-log-list__title {
+  margin: 0;
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.study-log-list__subtitle {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+/* Grid Layout */
+.study-log-list__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  animation: fadeIn var(--transition-base);
+}
+
+/* Empty State */
+.study-log-list__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  text-align: center;
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.05) 0%, rgba(46, 204, 113, 0.05) 100%);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--color-border);
+  min-height: 400px;
+}
+
+.study-log-list__empty-icon {
+  font-size: 80px;
+  display: block;
+}
+
+.study-log-list__empty-title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.study-log-list__empty-text {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  max-width: 300px;
+}
+
+/* FAB (Floating Action Button) */
+.study-log-list__fab-container {
+  position: fixed;
+  bottom: 100px;
+  right: var(--spacing-lg);
+  z-index: 50;
+}
+
+.study-log-list__fab {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  color: white;
+  border: none;
+  font-size: var(--font-size-2xl);
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: slideInUp var(--transition-base);
+}
+
+.study-log-list__fab:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-xl);
+}
+
+.study-log-list__fab:active {
+  transform: scale(0.95);
+}
+
+/* Error Container */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-2xl);
+  text-align: center;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-error);
+  min-height: 300px;
+}
+
+.error-message {
+  font-size: var(--font-size-xl);
+  color: var(--color-error);
+  font-weight: var(--font-weight-bold);
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+/* Mobile: 375px - 640px */
+@media (max-width: 640px) {
+  .study-log-list {
+    gap: var(--spacing-md);
+  }
+
+  .study-log-list__header {
+    padding: var(--spacing-md) 0;
+  }
+
+  .study-log-list__title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .study-log-list__subtitle {
+    font-size: var(--font-size-sm);
+  }
+
+  .study-log-list__grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .study-log-list__empty {
+    padding: var(--spacing-lg) var(--spacing-md);
+    min-height: 350px;
+    gap: var(--spacing-md);
+  }
+
+  .study-log-list__empty-icon {
+    font-size: 64px;
+  }
+
+  .study-log-list__empty-title {
+    font-size: var(--font-size-lg);
+  }
+
+  .study-log-list__empty-text {
+    font-size: var(--font-size-sm);
+  }
+
+  .study-log-list__fab-container {
+    bottom: 90px;
+    right: var(--spacing-md);
+  }
+
+  .study-log-list__fab {
+    width: 56px;
+    height: 56px;
+    font-size: var(--font-size-xl);
+  }
+}
+
+/* Tablet: 641px - 1024px */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .study-log-list__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+  }
+}
+
+/* Desktop: 1025px+ */
+@media (min-width: 1025px) {
+  .study-log-list__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .study-log-list__fab-container {
+    bottom: 120px;
+    right: var(--spacing-xl);
+  }
+}

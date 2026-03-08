@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { getCurrentQuiz, submitAnswer } from '../api/queue'
 import StudyLogCompleteModal from '../components/queue/StudyLogCompleteModal'
 import QueueProgressBar from '../components/queue/QueueProgressBar'
+import Layout from '../components/common/Layout'
+import Button from '../components/common/Button'
+import Textarea from '../components/common/Textarea'
+import LoadingSpinner from '../components/common/LoadingSpinner'
 import useTimerStore from '../store/timerStore'
 import './QuizSolvePage.css'
 
@@ -10,6 +14,7 @@ function QuizSolvePage() {
   const [currentQuiz, setCurrentQuiz] = useState(null)
   const [submittedAnswer, setSubmittedAnswer] = useState('')
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [completedStudyLog, setCompletedStudyLog] = useState(null)
   const [isCycleComplete, setIsCycleComplete] = useState(false)
   const [showModal, setShowModal] = useState(false)
@@ -62,6 +67,7 @@ function QuizSolvePage() {
       return
     }
 
+    setSubmitting(true)
     try {
       const result = await submitAnswer({
         quizId: currentQuiz.id,
@@ -79,14 +85,17 @@ function QuizSolvePage() {
         setTimeout(() => {
           setIsCycleComplete(false)
           loadCurrentQuiz()
+          setSubmitting(false)
         }, 2000)
       } else {
         await new Promise((resolve) => setTimeout(resolve, 500))
         loadCurrentQuiz()
+        setSubmitting(false)
       }
     } catch (error) {
       console.error('답 제출 실패:', error)
       alert('답 제출에 실패했습니다')
+      setSubmitting(false)
     }
   }
 
@@ -106,61 +115,94 @@ function QuizSolvePage() {
   }
 
   if (loading) {
-    return <div className="quiz-solve-page"><p>문제 로딩 중...</p></div>
+    return (
+      <Layout>
+        <LoadingSpinner />
+      </Layout>
+    )
   }
 
   if (!currentQuiz) {
     return (
-      <div className="quiz-solve-page empty">
-        <h2>문제가 없습니다</h2>
-        <p>먼저 학습 기록을 생성하고 문제를 만들어주세요</p>
-        <Link to="/">홈으로 돌아가기</Link>
-      </div>
+      <Layout>
+        <div className="quiz-solve__empty">
+          <div className="quiz-solve__empty-icon">❌</div>
+          <h2 className="quiz-solve__empty-title">풀 문제가 없습니다</h2>
+          <p className="quiz-solve__empty-text">
+            먼저 학습 기록을 생성하고 문제를 만들어주세요
+          </p>
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={() => navigate('/')}
+          >
+            🏠 홈으로 돌아가기
+          </Button>
+        </div>
+      </Layout>
     )
   }
 
   return (
-    <div className="quiz-solve-page">
-      <QueueProgressBar />
+    <Layout>
+      <div className="quiz-solve">
+        <QueueProgressBar />
 
-      {isCycleComplete && (
-        <div className="cycle-complete-banner">
-          <h2>🎉 한 바퀴 완료!</h2>
-          <p>다시 처음부터 시작합니다</p>
-        </div>
-      )}
+        {isCycleComplete && (
+          <div className="quiz-solve__cycle-complete">
+            <div className="quiz-solve__cycle-complete-content">
+              <h2>🎉 한 바퀴 완료!</h2>
+              <p>다시 처음부터 시작합니다</p>
+            </div>
+          </div>
+        )}
 
-      <div className="quiz-container">
-        <div className="quiz-header">
-          <span className="study-log-title">{currentQuiz.studyLogTitle}</span>
-          <span className="timer">{formatTime(elapsedSeconds)}</span>
-        </div>
+        <div className="quiz-solve__container">
+          <div className="quiz-solve__header">
+            <div className="quiz-solve__title-section">
+              <h2 className="quiz-solve__title">{currentQuiz.studyLogTitle}</h2>
+              <p className="quiz-solve__subtitle">문제를 읽고 답변을 작성하세요</p>
+            </div>
+            <div className="quiz-solve__timer">{formatTime(elapsedSeconds)}</div>
+          </div>
 
-        <div className="quiz-content">
-          <h3 className="question">{currentQuiz.question}</h3>
+          <div className="quiz-solve__question-area">
+            <div className="quiz-solve__question-number">Q</div>
+            <p className="quiz-solve__question">{currentQuiz.question}</p>
+          </div>
 
-          <form onSubmit={handleSubmit} className="answer-form">
-            <textarea
+          <form onSubmit={handleSubmit} className="quiz-solve__form">
+            <Textarea
+              label="답변"
               value={submittedAnswer}
               onChange={(e) => setSubmittedAnswer(e.target.value)}
-              placeholder="답변을 입력하세요"
-              rows="4"
-              className="answer-input"
+              placeholder="여기에 답변을 입력하세요"
+              rows={8}
+              size="lg"
+              required
             />
-            <button type="submit" className="submit-button">
-              제출하기
-            </button>
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="quiz-solve__submit-btn"
+              loading={submitting}
+              disabled={submitting}
+            >
+              ✅ 제출하기
+            </Button>
           </form>
         </div>
-      </div>
 
-      {showModal && (
-        <StudyLogCompleteModal
-          studyLog={completedStudyLog}
-          onClose={handleModalClose}
-        />
-      )}
-    </div>
+        {showModal && (
+          <StudyLogCompleteModal
+            studyLog={completedStudyLog}
+            onClose={handleModalClose}
+          />
+        )}
+      </div>
+    </Layout>
   )
 }
 

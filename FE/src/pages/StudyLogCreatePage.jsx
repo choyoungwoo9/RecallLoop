@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createStudyLog } from '../api/studyLog'
+import Layout from '../components/common/Layout'
+import Button from '../components/common/Button'
+import Input from '../components/common/Input'
+import Textarea from '../components/common/Textarea'
+import Card from '../components/common/Card'
+import './StudyLogCreatePage.css'
 
 function StudyLogCreatePage() {
   const [title, setTitle] = useState('')
@@ -27,48 +33,65 @@ function StudyLogCreatePage() {
   }
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
-      <h1>새 학습 기록 작성</h1>
-      {error && <div style={{ color: 'red', marginBottom: '16px' }}>{error}</div>}
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>제목</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="학습 제목을 입력하세요"
-            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '16px', boxSizing: 'border-box' }}
-          />
-        </div>
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>내용</label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="학습 내용을 입력하세요"
-            rows={10}
-            style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px', fontSize: '16px', resize: 'vertical', boxSizing: 'border-box' }}
-          />
-        </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            type="submit"
-            disabled={submitting}
-            style={{ padding: '10px 24px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', fontSize: '16px', cursor: submitting ? 'not-allowed' : 'pointer' }}
-          >
-            {submitting ? '저장 중...' : '저장'}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            style={{ padding: '10px 24px', backgroundColor: '#9E9E9E', color: 'white', border: 'none', borderRadius: '4px', fontSize: '16px', cursor: 'pointer' }}
-          >
-            취소
-          </button>
-        </div>
-      </form>
-    </div>
+    <Layout>
+      <div className="study-log-create">
+        <Card>
+          <div className="study-log-create__header">
+            <h2 className="study-log-create__title">📝 새 학습 기록 작성</h2>
+            <p className="study-log-create__subtitle">학습한 내용을 정리하세요</p>
+          </div>
+
+          {error && (
+            <div className="study-log-create__error">
+              <span>❌</span>
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="study-log-create__form">
+            <Input
+              label="제목"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="학습 제목을 입력하세요"
+              required
+              size="md"
+            />
+
+            <Textarea
+              label="내용"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="공부한 내용을 상세히 입력하세요"
+              required
+              rows={12}
+              size="lg"
+            />
+
+            <div className="study-log-create__actions">
+              <Button
+                type="submit"
+                variant="success"
+                size="lg"
+                loading={submitting}
+                disabled={submitting}
+              >
+                💾 저장
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                onClick={() => navigate('/')}
+              >
+                취소
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
+    </Layout>
   )
 }
 
