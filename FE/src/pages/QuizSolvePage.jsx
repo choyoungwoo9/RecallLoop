@@ -41,7 +41,7 @@ function QuizSolvePage() {
     try {
       setLoading(true)
       const quiz = await getCurrentQuiz()
-      if (quiz.quiz) {
+      if (quiz && quiz.id) {
         setCurrentQuiz(quiz)
         setSubmittedAnswer('')
         setElapsedSeconds(0)
