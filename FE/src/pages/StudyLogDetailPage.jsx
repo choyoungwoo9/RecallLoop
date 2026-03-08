@@ -28,7 +28,7 @@ function StudyLogDetailPage() {
   const [newConfigCount, setNewConfigCount] = useState(5)
   const [creatingConfig, setCreatingConfig] = useState(false)
   const [generatingQuizzes, setGeneratingQuizzes] = useState(null)
-  const [activeTab, setActiveTab] = useState('quizzes')
+  const [activeTab, setActiveTab] = useState('content')
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     title: '',
@@ -165,8 +165,30 @@ function StudyLogDetailPage() {
     try {
       await generateQuizzes(configId)
       loadQuizzes()
+      setConfirmModal({
+        isOpen: true,
+        title: '성공',
+        message: '문제가 생성되었습니다.',
+        confirmText: '확인',
+        cancelText: '',
+        variant: 'success',
+        action: () => {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }))
+          setActiveTab('quizzes')
+        }
+      })
     } catch (err) {
-      alert('문제 생성에 실패했습니다.')
+      setConfirmModal({
+        isOpen: true,
+        title: '오류',
+        message: '문제 생성에 실패했습니다.',
+        confirmText: '확인',
+        cancelText: '',
+        variant: 'info',
+        action: () => {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }))
+        }
+      })
     } finally {
       setGeneratingQuizzes(null)
     }
@@ -278,14 +300,20 @@ function StudyLogDetailPage() {
           </div>
         </div>
 
-        <Card className="study-log-detail__content-card">
-          <div className="study-log-detail__content">
-            {studyLog.content}
-          </div>
-        </Card>
-
         <Tabs
           tabs={[
+            {
+              id: 'content',
+              label: '학습 내용',
+              icon: '📝',
+              content: (
+                <Card className="study-log-detail__content-card">
+                  <div className="study-log-detail__content">
+                    {studyLog.content}
+                  </div>
+                </Card>
+              )
+            },
             {
               id: 'quizzes',
               label: '생성된 문제',
