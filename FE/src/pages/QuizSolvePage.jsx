@@ -63,11 +63,11 @@ function QuizSolvePage() {
     }
 
     try {
-      const result = await submitAnswer(
-        currentQuiz.id,
-        submittedAnswer,
-        elapsedSeconds
-      )
+      const result = await submitAnswer({
+        quizId: currentQuiz.id,
+        submittedAnswer: submittedAnswer,
+        elapsedSeconds: elapsedSeconds
+      })
 
       if (result.completedStudyLog) {
         setCompletedStudyLog(result.completedStudyLog)
