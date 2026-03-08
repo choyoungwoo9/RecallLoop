@@ -27,8 +27,9 @@ function QueueProgressBar() {
   return (
     <div className="queue-progress-bar">
       <div className="progress-info">
+        <span className="progress-label">이번 사이클</span>
         <span className="progress-text">
-          {status.completedCount} / {status.totalCount}
+          {status.completedCount} / {status.totalCount} 완료
         </span>
       </div>
       <div className="progress-container">

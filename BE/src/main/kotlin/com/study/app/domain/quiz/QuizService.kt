@@ -97,11 +97,14 @@ class QuizService(
                 completedCount = 0
             )
         } else {
-            val currentTotal = quizRepository.findByStudyLogIdOrderByQueueOrder(studyLogId).size
+            // Get total count of ALL quizzes in the system
+            val allQuizzes = quizRepository.findAll()
+            val totalCount = allQuizzes.size
+
             val currentQuiz = if (queueState.currentQuiz == null) newQuizzes.firstOrNull() else queueState.currentQuiz
             queueState = queueState.copy(
                 currentQuiz = currentQuiz,
-                totalCount = currentTotal
+                totalCount = totalCount
             )
         }
 

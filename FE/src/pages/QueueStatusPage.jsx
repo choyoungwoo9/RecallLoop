@@ -48,7 +48,7 @@ function QueueStatusPage() {
     <Layout>
       <div className="queue-status">
         <div className="queue-status__header">
-          <h2 className="queue-status__title">📊 문제 풀이 현황</h2>
+          <h2 className="queue-status__title">문제 풀이 현황</h2>
           <p className="queue-status__subtitle">학습 진도를 확인하고 문제를 풀어보세요</p>
         </div>
 
@@ -95,7 +95,7 @@ function QueueStatusPage() {
           <>
             <Card className="queue-status__quiz-preview">
               <div className="queue-status__quiz-preview-header">
-                <h3 className="queue-status__quiz-preview-title">📌 다음 문제</h3>
+                <h3 className="queue-status__quiz-preview-title">다음 문제</h3>
               </div>
               <div className="queue-status__quiz-preview-content">
                 <p className="queue-status__quiz-preview-text">{currentQuiz.question}</p>
