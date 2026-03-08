@@ -7,14 +7,16 @@ data class StudyLogResponse(
     val id: Long,
     val title: String,
     val content: String,
-    val createdAt: LocalDateTime
+    val createdAt: LocalDateTime,
+    val quizCount: Int = 0
 ) {
     companion object {
-        fun from(studyLog: StudyLog) = StudyLogResponse(
+        fun from(studyLog: StudyLog, quizCount: Int = 0) = StudyLogResponse(
             id = studyLog.id!!,
             title = studyLog.title,
             content = studyLog.content,
-            createdAt = studyLog.createdAt
+            createdAt = studyLog.createdAt,
+            quizCount = quizCount
         )
     }
 }
