@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import logo from '../../assets/logo.svg'
 import './Layout.css'
 
 function Layout({ children }) {
@@ -11,10 +12,9 @@ function Layout({ children }) {
       <header className="layout__header">
         <div className="layout__header-content">
           <Link to="/" className="layout__logo">
-            <span className="layout__logo-icon">📚</span>
-            <span className="layout__logo-text">Study Auto</span>
+            <img src={logo} alt="Recall Loop" className="layout__logo-image" />
           </Link>
-          <h1 className="layout__title">자동 학습 관리 시스템</h1>
+          <h1 className="layout__title">무한 학습의 순환</h1>
         </div>
       </header>
 

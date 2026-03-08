@@ -35,23 +35,21 @@
   color: var(--color-primary);
   text-decoration: none;
   transition: all var(--transition-base);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-sm);
   border-radius: var(--radius-md);
+  height: 60px;
 }
 
 .layout__logo:hover {
-  background-color: rgba(52, 152, 219, 0.1);
+  background-color: rgba(0, 82, 204, 0.05);
   transform: translateY(-2px);
 }
 
-.layout__logo-icon {
-  font-size: var(--font-size-2xl);
-}
-
-.layout__logo-text {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-primary);
+.layout__logo-image {
+  height: 100%;
+  width: auto;
+  max-width: 250px;
+  object-fit: contain;
 }
 
 .layout__title {
