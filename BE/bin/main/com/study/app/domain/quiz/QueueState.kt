@@ -11,9 +11,9 @@ data class QueueState(
     val id: Long = 1,
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "current_quiz_id")
-    val currentQuiz: Quiz? = null,
-    val totalCount: Int = 0,
-    val completedCount: Int = 0,
+    var currentQuiz: Quiz? = null,
+    var totalCount: Int = 0,
+    var completedCount: Int = 0,
     @UpdateTimestamp
-    val updatedAt: LocalDateTime = LocalDateTime.now()
+    var updatedAt: LocalDateTime = LocalDateTime.now()
 )

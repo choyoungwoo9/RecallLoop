@@ -1,0 +1,12 @@
+package com.study.app.domain.quiz
+
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+
+interface QuizAttemptRepository : JpaRepository<QuizAttempt, Long> {
+    @Query("SELECT COUNT(qa) FROM QuizAttempt qa WHERE qa.quiz.studyLog.id = :studyLogId")
+    fun countByStudyLogId(studyLogId: Long): Int
+
+    @Query("SELECT qa FROM QuizAttempt qa WHERE qa.quiz.id = :quizId ORDER BY qa.attemptedAt DESC LIMIT 1")
+    fun findLatestAttemptByQuizId(quizId: Long): QuizAttempt?
+}
