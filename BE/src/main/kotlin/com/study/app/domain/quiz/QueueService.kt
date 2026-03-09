@@ -4,6 +4,7 @@ import com.study.app.domain.quiz.dto.*
 import com.study.app.domain.studylog.StudyLogRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
 @Transactional
@@ -140,13 +141,15 @@ class QueueService(
                 id = 1,
                 currentQuiz = allQuizzes.firstOrNull(),
                 totalCount = totalCount,
-                completedCount = 0
+                completedCount = 0,
+                cycleStartedAt = LocalDateTime.now()
             )
         } else {
             queueState = queueState.copy(
                 currentQuiz = allQuizzes.firstOrNull(),
                 totalCount = totalCount,
-                completedCount = 0
+                completedCount = 0,
+                cycleStartedAt = LocalDateTime.now()
             )
         }
 
