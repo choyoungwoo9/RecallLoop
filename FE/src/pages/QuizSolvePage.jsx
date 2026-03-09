@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentQuiz, submitAnswer } from '../api/queue'
-import StudyLogCompleteModal from '../components/queue/StudyLogCompleteModal'
+import CompletionQuizzesModal from '../components/queue/CompletionQuizzesModal'
+import StudyLogSummaryModal from '../components/queue/StudyLogSummaryModal'
 import QueueProgressBar from '../components/queue/QueueProgressBar'
 import Layout from '../components/common/Layout'
 import Button from '../components/common/Button'
 import Textarea from '../components/common/Textarea'
 import LoadingSpinner from '../components/common/LoadingSpinner'
-import { HomeIcon } from '../components/common/Icons'
 import useTimerStore from '../store/timerStore'
 import './QuizSolvePage.css'
 
@@ -18,7 +18,8 @@ function QuizSolvePage() {
   const [submitting, setSubmitting] = useState(false)
   const [completedStudyLog, setCompletedStudyLog] = useState(null)
   const [isCycleComplete, setIsCycleComplete] = useState(false)
-  const [showModal, setShowModal] = useState(false)
+  const [showQuizzesModal, setShowQuizzesModal] = useState(false)
+  const [showSummaryModal, setShowSummaryModal] = useState(false)
   const [pendingCycleComplete, setPendingCycleComplete] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const timerInterval = useTimerStore((state) => state.timerInterval)
@@ -80,7 +81,7 @@ function QuizSolvePage() {
       // completedStudyLog가 있으면 먼저 모달을 표시하고, 나중에 처리
       if (result.completedStudyLog) {
         setCompletedStudyLog(result.completedStudyLog)
-        setShowModal(true)
+        setShowQuizzesModal(true)
         setPendingCycleComplete(result.isCycleComplete)
         setSubmitting(false)
       } else if (result.isCycleComplete) {
@@ -103,12 +104,14 @@ function QuizSolvePage() {
     }
   }
 
-  const handleModalClose = async (action) => {
-    setShowModal(false)
-    if (action === 'view') {
-      navigate(`/study-logs/${completedStudyLog.id}`)
-    } else {
+  const handleQuizzesModalAction = (action) => {
+    if (action === 'viewSummary') {
+      // 기록 요약 모달로 전환
+      setShowQuizzesModal(false)
+      setShowSummaryModal(true)
+    } else if (action === 'continue') {
       // "계속 풀기" 선택
+      setShowQuizzesModal(false)
       if (pendingCycleComplete) {
         // 사이클 완료 배너를 보여줌
         setIsCycleComplete(true)
@@ -118,8 +121,20 @@ function QuizSolvePage() {
           loadCurrentQuiz()
         }, 2000)
       } else {
-        await loadCurrentQuiz()
+        loadCurrentQuiz()
       }
+    }
+  }
+
+  const handleSummaryModalAction = (action) => {
+    if (action === 'back') {
+      // 문제 비교로 돌아가기
+      setShowSummaryModal(false)
+      setShowQuizzesModal(true)
+    } else if (action === 'navigate') {
+      // 기록 상세 보기로 이동
+      setShowSummaryModal(false)
+      navigate(`/study-logs/${completedStudyLog.id}`)
     }
   }
 
@@ -210,10 +225,17 @@ function QuizSolvePage() {
           </form>
         </div>
 
-        {showModal && (
-          <StudyLogCompleteModal
+        {showQuizzesModal && completedStudyLog && (
+          <CompletionQuizzesModal
             studyLog={completedStudyLog}
-            onClose={handleModalClose}
+            onAction={handleQuizzesModalAction}
+          />
+        )}
+
+        {showSummaryModal && completedStudyLog && (
+          <StudyLogSummaryModal
+            studyLog={completedStudyLog}
+            onAction={handleSummaryModalAction}
           />
         )}
       </div>

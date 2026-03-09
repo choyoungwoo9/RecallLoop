@@ -15,6 +15,7 @@ class QuizService(
     private val quizConfigRepository: QuizConfigRepository,
     private val studyLogRepository: StudyLogRepository,
     private val queueStateRepository: QueueStateRepository,
+    private val quizAttemptRepository: QuizAttemptRepository,
     private val geminiClient: GeminiClient
 ) {
     fun generateQuizzes(configId: Long): List<QuizResponse> {
@@ -109,5 +110,15 @@ class QuizService(
         }
 
         queueStateRepository.save(queueState)
+    }
+
+    fun getCompletionSummary(studyLogId: Long): com.study.app.domain.quiz.dto.CompletionSummaryResponse {
+        val studyLog = studyLogRepository.findById(studyLogId)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "StudyLog not found: $studyLogId") }
+
+        val quizzes = quizRepository.findByStudyLogId(studyLogId)
+        val attempts = quizAttemptRepository.findByStudyLogId(studyLogId)
+
+        return com.study.app.domain.quiz.dto.CompletionSummaryResponse.from(studyLog, quizzes, attempts)
     }
 }

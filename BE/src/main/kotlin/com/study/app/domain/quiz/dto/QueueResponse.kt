@@ -51,3 +51,42 @@ data class QueueSubmitResponse(
     val completedStudyLog: StudyLogResponse?,
     val isCycleComplete: Boolean
 )
+
+data class CompletionSummaryQuizItem(
+    val id: Long,
+    val question: String,
+    val answer: String,
+    val submittedAnswer: String,
+    val elapsedSeconds: Int
+)
+
+data class CompletionSummaryResponse(
+    val studyLog: StudyLogResponse,
+    val quizzes: List<CompletionSummaryQuizItem>
+) {
+    companion object {
+        fun from(
+            studyLog: com.study.app.domain.studylog.StudyLog,
+            quizzes: List<com.study.app.domain.quiz.Quiz>,
+            attempts: List<com.study.app.domain.quiz.QuizAttempt>
+        ): CompletionSummaryResponse {
+            val attemptsMap = attempts.associateBy { it.quiz.id }
+
+            val summaryQuizzes = quizzes.map { quiz ->
+                val attempt = attemptsMap[quiz.id]
+                CompletionSummaryQuizItem(
+                    id = quiz.id!!,
+                    question = quiz.question,
+                    answer = quiz.answer,
+                    submittedAnswer = attempt?.submittedAnswer ?: "미답변",
+                    elapsedSeconds = attempt?.elapsedSeconds ?: 0
+                )
+            }
+
+            return CompletionSummaryResponse(
+                studyLog = StudyLogResponse(id = studyLog.id!!, title = studyLog.title),
+                quizzes = summaryQuizzes
+            )
+        }
+    }
+}

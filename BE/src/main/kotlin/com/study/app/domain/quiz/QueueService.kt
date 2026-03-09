@@ -79,7 +79,42 @@ class QueueService(
         val nextQueueOrder = (quiz.queueOrder % queueState.totalCount) + 1
         val nextQuiz = quizRepository.findByQueueOrder(nextQueueOrder).firstOrNull()
 
-        // 5. DB 레벨에서 원자적 업데이트
+        // 5. 완주 감지: **사이클이 완료될 때만** 현재 studyLog의 완주 여부 확인
+        val currentStudyLogId = quiz.studyLog.id!!
+        val completedStudyLog = if (isCycleComplete) {
+            // 사이클이 완료된 순간, 최근 totalCount개의 attempt에서
+            // 현재 studyLog의 모든 문제가 포함되어 있는지 확인
+            val quizzesInCurrentStudyLog = quizRepository.findByStudyLogId(currentStudyLogId)
+
+            if (quizzesInCurrentStudyLog.isEmpty()) {
+                null
+            } else {
+                // 최근 totalCount개의 attempt 조회
+                val recentAttempts = quizAttemptRepository.findRecentByStudyLogId(currentStudyLogId, queueState.totalCount)
+
+                // 최근 attempt에서 이 studyLog의 몇 개 문제가 포함되어 있는가?
+                val quizIdsInRecentAttempts = recentAttempts.map { it.quiz.id }.toSet()
+                val quizIdsInCurrentStudyLog = quizzesInCurrentStudyLog.map { it.id }.toSet()
+
+                // 모든 문제가 최근 attempt에 포함되어 있는가?
+                val allQuizzesInRecentAttempts = quizIdsInCurrentStudyLog.all { it in quizIdsInRecentAttempts }
+
+                if (allQuizzesInRecentAttempts) {
+                    val studyLog = studyLogRepository.findById(currentStudyLogId)
+                        .orElseThrow { IllegalArgumentException("StudyLog not found") }
+                    StudyLogResponse(
+                        id = studyLog.id!!,
+                        title = studyLog.title
+                    )
+                } else {
+                    null
+                }
+            }
+        } else {
+            null
+        }
+
+        // 6. DB 레벨에서 원자적 업데이트
         if (isCycleComplete) {
             // 한 바퀴 완료: completedCount = 0 + 다음 문제 포인터 이동
             queueStateRepository.resetCompletedCount()
@@ -87,24 +122,6 @@ class QueueService(
         } else {
             // 일반적인 경우: completedCount + 1 + 다음 문제 포인터 이동
             queueStateRepository.incrementCompletedAndSetNextQuiz(nextQuiz?.id)
-        }
-
-        // 6. 완주 감지: 현재 studyLog의 모든 quiz가 attempt되었는지 확인
-        val currentStudyLogId = quiz.studyLog.id!!
-        val quizzesInCurrentStudyLog = quizRepository.findByStudyLogId(currentStudyLogId)
-        val attemptedQuizzesInCurrentStudyLog = quizzesInCurrentStudyLog.count { quizInLog ->
-            quizAttemptRepository.findLatestAttemptByQuizId(quizInLog.id!!) != null
-        }
-
-        val completedStudyLog = if (attemptedQuizzesInCurrentStudyLog == quizzesInCurrentStudyLog.size) {
-            val studyLog = studyLogRepository.findById(currentStudyLogId)
-                .orElseThrow { IllegalArgumentException("StudyLog not found") }
-            StudyLogResponse(
-                id = studyLog.id!!,
-                title = studyLog.title
-            )
-        } else {
-            null
         }
 
         return QueueSubmitResponse(
