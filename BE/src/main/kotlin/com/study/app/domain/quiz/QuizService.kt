@@ -31,24 +31,20 @@ class QuizService(
             questionCount = quizConfig.questionCount
         )
 
-        // Find max queueOrder in entire system (not per studyLog)
-        val maxQueueOrder = quizRepository.findAll().maxOfOrNull { it.queueOrder } ?: 0
-
-        // Save quizzes with queueOrder
-        val savedQuizzes = generatedQuizzes.mapIndexed { index, generatedQuiz ->
+        // Save quizzes (queueOrder는 재정렬 후 할당)
+        val savedQuizzes = generatedQuizzes.map { generatedQuiz ->
             val quiz = Quiz(
                 quizConfig = quizConfig,
                 studyLog = studyLog,
                 question = generatedQuiz.question,
                 answer = generatedQuiz.answer,
-                queueOrder = maxQueueOrder + index + 1
+                queueOrder = 0 // 임시값, 재정렬 후 업데이트
             )
             quizRepository.save(quiz)
         }
 
-        // Update QueueState
-        val studyLogId = studyLog.id!!
-        updateQueueState(studyLogId, savedQuizzes)
+        // 전체 queueOrder를 1부터 새로 정렬
+        reorderAllQuizzes()
 
         return savedQuizzes.map { QuizResponse.from(it) }
     }
@@ -63,51 +59,44 @@ class QuizService(
         val quiz = quizRepository.findByIdOrNull(id)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Quiz not found: $id")
 
-        val studyLogId = quiz.studyLog.id!!
-        val deletedQueueOrder = quiz.queueOrder
-
-        // Delete the quiz
+        // 문제 삭제
         quizRepository.deleteById(id)
 
-        // Reorder remaining quizzes
-        val remainingQuizzes = quizRepository.findByStudyLogIdOrderByQueueOrder(studyLogId)
-        remainingQuizzes.forEach { remainingQuiz ->
-            if (remainingQuiz.queueOrder > deletedQueueOrder) {
-                val updated = remainingQuiz.copy(queueOrder = remainingQuiz.queueOrder - 1)
+        // 전체 queueOrder를 1부터 새로 정렬
+        reorderAllQuizzes()
+    }
+
+    /**
+     * 전체 문제를 queueOrder 기준으로 정렬하고 1부터 재정렬
+     */
+    private fun reorderAllQuizzes() {
+        val allQuizzes = quizRepository.findAll().sortedBy { it.id } // 안정적인 정렬을 위해 ID 기준
+
+        allQuizzes.forEachIndexed { index, quiz ->
+            val newQueueOrder = index + 1
+            if (quiz.queueOrder != newQueueOrder) {
+                val updated = quiz.copy(queueOrder = newQueueOrder)
                 quizRepository.save(updated)
             }
         }
 
-        // Update QueueState
-        val newTotalCount = remainingQuizzes.size - 1
-        val queueState = queueStateRepository.findByIdOrNull(1L)
-        if (queueState != null) {
-            val updatedQueueState = queueState.copy(totalCount = newTotalCount)
-            queueStateRepository.save(updatedQueueState)
-        }
+        // QueueState 재초기화
+        resetQueueState()
     }
 
-    private fun updateQueueState(studyLogId: Long, newQuizzes: List<Quiz>) {
-        var queueState = queueStateRepository.findByIdOrNull(1L)
-
-        // Always count all quizzes in the system
+    /**
+     * QueueState를 초기 상태로 리셋
+     */
+    private fun resetQueueState() {
         val allQuizzes = quizRepository.findAll()
-        val totalCount = allQuizzes.size
+        val firstQuiz = allQuizzes.minByOrNull { it.queueOrder }
 
-        if (queueState == null) {
-            queueState = QueueState(
-                id = 1,
-                currentQuiz = newQuizzes.firstOrNull(),
-                totalCount = totalCount,
-                completedCount = 0
-            )
-        } else {
-            val currentQuiz = if (queueState.currentQuiz == null) newQuizzes.firstOrNull() else queueState.currentQuiz
-            queueState = queueState.copy(
-                currentQuiz = currentQuiz,
-                totalCount = totalCount
-            )
-        }
+        val queueState = QueueState(
+            id = 1,
+            currentQuiz = firstQuiz,
+            totalCount = allQuizzes.size,
+            completedCount = 0
+        )
 
         queueStateRepository.save(queueState)
     }
