@@ -228,6 +228,7 @@ function QuizSolvePage() {
         {showQuizzesModal && completedStudyLog && (
           <CompletionQuizzesModal
             studyLog={completedStudyLog}
+            isCycleComplete={pendingCycleComplete}
             onAction={handleQuizzesModalAction}
           />
         )}

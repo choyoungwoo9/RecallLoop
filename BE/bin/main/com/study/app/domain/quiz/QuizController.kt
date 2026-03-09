@@ -39,3 +39,14 @@ class QuizDeleteController(
         return ResponseEntity.noContent().build()
     }
 }
+
+@RestController
+@RequestMapping("/api/study-logs/{studyLogId}/completion-summary")
+class CompletionSummaryController(
+    private val quizService: QuizService
+) {
+    @GetMapping
+    fun getCompletionSummary(@PathVariable studyLogId: Long): ResponseEntity<com.study.app.domain.quiz.dto.CompletionSummaryResponse> {
+        return ResponseEntity.ok(quizService.getCompletionSummary(studyLogId))
+    }
+}

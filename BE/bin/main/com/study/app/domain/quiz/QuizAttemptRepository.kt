@@ -9,4 +9,19 @@ interface QuizAttemptRepository : JpaRepository<QuizAttempt, Long> {
 
     @Query("SELECT qa FROM QuizAttempt qa WHERE qa.quiz.id = :quizId ORDER BY qa.attemptedAt DESC LIMIT 1")
     fun findLatestAttemptByQuizId(quizId: Long): QuizAttempt?
+
+    @Query("""
+        SELECT qa FROM QuizAttempt qa
+        WHERE qa.quiz.studyLog.id = :studyLogId
+        ORDER BY qa.attemptedAt DESC
+    """)
+    fun findByStudyLogId(studyLogId: Long): List<QuizAttempt>
+
+    @Query("""
+        SELECT qa FROM QuizAttempt qa
+        WHERE qa.quiz.studyLog.id = :studyLogId
+        ORDER BY qa.attemptedAt DESC
+        LIMIT :limit
+    """)
+    fun findRecentByStudyLogId(studyLogId: Long, limit: Int): List<QuizAttempt>
 }

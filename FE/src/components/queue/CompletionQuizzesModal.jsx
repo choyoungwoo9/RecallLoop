@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { getCompletionSummary } from '../../api/completionSummary'
 import './CompletionQuizzesModal.css'
 
-function CompletionQuizzesModal({ studyLog, onAction }) {
+function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [expandedIndex, setExpandedIndex] = useState(null)
@@ -49,10 +49,21 @@ function CompletionQuizzesModal({ studyLog, onAction }) {
     <div className="modal-overlay">
       <div className="completion-modal">
         <div className="modal-header">
-          <h2 className="modal-title">완주 축하합니다! 🎓</h2>
-          <p className="modal-subtitle">
-            <strong>{studyLog.title}</strong>의 모든 문제를 완주했습니다
-          </p>
+          {isCycleComplete ? (
+            <>
+              <h2 className="modal-title">완주 축하합니다! 🎓</h2>
+              <p className="modal-subtitle">
+                한 바퀴를 모두 돌았습니다. 계속해서 복습하세요!
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="modal-title">모든 문제 완주!</h2>
+              <p className="modal-subtitle">
+                <strong>{studyLog.title}</strong>의 모든 문제를 풀었습니다
+              </p>
+            </>
+          )}
         </div>
 
         <div className="modal-body">

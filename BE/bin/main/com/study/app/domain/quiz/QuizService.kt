@@ -15,6 +15,7 @@ class QuizService(
     private val quizConfigRepository: QuizConfigRepository,
     private val studyLogRepository: StudyLogRepository,
     private val queueStateRepository: QueueStateRepository,
+    private val quizAttemptRepository: QuizAttemptRepository,
     private val geminiClient: GeminiClient
 ) {
     fun generateQuizzes(configId: Long): List<QuizResponse> {
@@ -30,8 +31,8 @@ class QuizService(
             questionCount = quizConfig.questionCount
         )
 
-        // Find max queueOrder for this studyLog
-        val maxQueueOrder = quizRepository.findMaxQueueOrderByStudyLogId(studyLog.id!!) ?: 0
+        // Find max queueOrder in entire system (not per studyLog)
+        val maxQueueOrder = quizRepository.findAll().maxOfOrNull { it.queueOrder } ?: 0
 
         // Save quizzes with queueOrder
         val savedQuizzes = generatedQuizzes.mapIndexed { index, generatedQuiz ->
@@ -89,22 +90,35 @@ class QuizService(
     private fun updateQueueState(studyLogId: Long, newQuizzes: List<Quiz>) {
         var queueState = queueStateRepository.findByIdOrNull(1L)
 
+        // Always count all quizzes in the system
+        val allQuizzes = quizRepository.findAll()
+        val totalCount = allQuizzes.size
+
         if (queueState == null) {
             queueState = QueueState(
                 id = 1,
                 currentQuiz = newQuizzes.firstOrNull(),
-                totalCount = newQuizzes.size,
+                totalCount = totalCount,
                 completedCount = 0
             )
         } else {
-            val currentTotal = quizRepository.findByStudyLogIdOrderByQueueOrder(studyLogId).size
             val currentQuiz = if (queueState.currentQuiz == null) newQuizzes.firstOrNull() else queueState.currentQuiz
             queueState = queueState.copy(
                 currentQuiz = currentQuiz,
-                totalCount = currentTotal
+                totalCount = totalCount
             )
         }
 
         queueStateRepository.save(queueState)
+    }
+
+    fun getCompletionSummary(studyLogId: Long): com.study.app.domain.quiz.dto.CompletionSummaryResponse {
+        val studyLog = studyLogRepository.findById(studyLogId)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "StudyLog not found: $studyLogId") }
+
+        val quizzes = quizRepository.findByStudyLogId(studyLogId)
+        val attempts = quizAttemptRepository.findByStudyLogId(studyLogId)
+
+        return com.study.app.domain.quiz.dto.CompletionSummaryResponse.from(studyLog, quizzes, attempts)
     }
 }
