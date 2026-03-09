@@ -28,7 +28,7 @@ interface QueueStateRepository : JpaRepository<QueueState, Long> {
     fun incrementCompletedAndSetNextQuiz(nextQuizId: Long?): Int
 
     /**
-     * 한 바퀴 완료 후 원자적으로 completedCount 리셋
+     * 한 바퀴 완료 후 원자적으로 completedCount 리셋 및 사이클 시작 시간 갱신
      */
     @Modifying(clearAutomatically = true)
     @Transactional
@@ -36,6 +36,7 @@ interface QueueStateRepository : JpaRepository<QueueState, Long> {
         """
         UPDATE queue_state
         SET completed_count = 0,
+            cycle_started_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = 1
         """,

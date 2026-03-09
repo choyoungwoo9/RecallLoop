@@ -79,16 +79,17 @@ class QueueService(
         val nextQueueOrder = (quiz.queueOrder % queueState.totalCount) + 1
         val nextQuiz = quizRepository.findByQueueOrder(nextQueueOrder).firstOrNull()
 
-        // 5. 완주 감지: 현재 studyLog의 모든 문제가 완료되었는지 확인 (사이클 무관)
+        // 5. 완주 감지: 현재 studyLog의 모든 문제가 현재 사이클에서 완료되었는지 확인
         val currentStudyLogId = quiz.studyLog.id!!
         val quizzesInCurrentStudyLog = quizRepository.findByStudyLogId(currentStudyLogId)
+        val cycleStartedAt = queueState.cycleStartedAt
 
         val completedStudyLog = if (quizzesInCurrentStudyLog.isEmpty()) {
             null
         } else {
-            // 이 studyLog의 모든 문제가 attempt 기록이 있는가?
+            // 이 studyLog의 모든 문제가 현재 사이클 이후에 attempt 기록이 있는가?
             val allQuizzesAttempted = quizzesInCurrentStudyLog.all { quizInLog ->
-                quizAttemptRepository.findLatestAttemptByQuizId(quizInLog.id!!) != null
+                quizAttemptRepository.findAttemptByQuizIdAfter(quizInLog.id!!, cycleStartedAt) != null
             }
 
             if (allQuizzesAttempted) {
