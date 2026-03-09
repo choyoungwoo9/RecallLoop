@@ -62,6 +62,7 @@ data class CompletionSummaryQuizItem(
 
 data class CompletionSummaryResponse(
     val studyLog: StudyLogResponse,
+    val studyLogContent: String,
     val quizzes: List<CompletionSummaryQuizItem>
 ) {
     companion object {
@@ -85,6 +86,7 @@ data class CompletionSummaryResponse(
 
             return CompletionSummaryResponse(
                 studyLog = StudyLogResponse(id = studyLog.id!!, title = studyLog.title),
+                studyLogContent = studyLog.content,
                 quizzes = summaryQuizzes
             )
         }

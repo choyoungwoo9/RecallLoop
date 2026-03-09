@@ -117,10 +117,6 @@ function QuizSolvePage() {
       } else {
         loadCurrentQuiz()
       }
-    } else if (action === 'navigate') {
-      // "기록 상세 보기" 선택
-      setShowQuizzesModal(false)
-      navigate(`/study-logs/${completedStudyLog.id}`)
     }
   }
 
