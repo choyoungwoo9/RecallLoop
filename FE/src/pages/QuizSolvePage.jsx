@@ -7,6 +7,7 @@ import Layout from '../components/common/Layout'
 import Button from '../components/common/Button'
 import Textarea from '../components/common/Textarea'
 import LoadingSpinner from '../components/common/LoadingSpinner'
+import ConfirmModal from '../components/common/ConfirmModal'
 import useTimerStore from '../store/timerStore'
 import './QuizSolvePage.css'
 
@@ -20,6 +21,7 @@ function QuizSolvePage() {
   const [showQuizzesModal, setShowQuizzesModal] = useState(false)
   const [pendingCycleComplete, setPendingCycleComplete] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', type: '' })
   const timerInterval = useTimerStore((state) => state.timerInterval)
   const startTimer = useTimerStore((state) => state.startTimer)
   const stopTimer = useTimerStore((state) => state.stopTimer)
@@ -56,6 +58,7 @@ function QuizSolvePage() {
       }
     } catch (error) {
       console.error('문제 로드 실패:', error)
+      setCurrentQuiz(null)
     } finally {
       setLoading(false)
     }
@@ -64,7 +67,12 @@ function QuizSolvePage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!submittedAnswer.trim()) {
-      alert('답을 입력해주세요')
+      setConfirmModal({
+        isOpen: true,
+        title: '알림',
+        message: '답을 입력해주세요',
+        type: 'empty'
+      })
       return
     }
 
@@ -97,7 +105,12 @@ function QuizSolvePage() {
       }
     } catch (error) {
       console.error('답 제출 실패:', error)
-      alert('답 제출에 실패했습니다')
+      setConfirmModal({
+        isOpen: true,
+        title: '오류',
+        message: '답 제출에 실패했습니다',
+        type: 'error'
+      })
       setSubmitting(false)
     }
   }
@@ -118,6 +131,10 @@ function QuizSolvePage() {
         loadCurrentQuiz()
       }
     }
+  }
+
+  const handleConfirmModalConfirm = () => {
+    setConfirmModal({ isOpen: false, title: '', message: '', type: '' })
   }
 
   const formatTime = (seconds) => {
@@ -214,6 +231,17 @@ function QuizSolvePage() {
             onAction={handleQuizzesModalAction}
           />
         )}
+
+        <ConfirmModal
+          isOpen={confirmModal.isOpen}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmText="확인"
+          cancelText={null}
+          variant={confirmModal.type === 'error' ? 'danger' : 'primary'}
+          onConfirm={handleConfirmModalConfirm}
+          onCancel={handleConfirmModalConfirm}
+        />
       </div>
     </Layout>
   )

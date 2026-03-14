@@ -43,4 +43,26 @@ interface QueueStateRepository : JpaRepository<QueueState, Long> {
         nativeQuery = true
     )
     fun resetCompletedCount(): Int
+
+    /**
+     * 한 바퀴 완료 후 한 번의 원자적 UPDATE로 처리
+     * - completedCount = 1 (0에서 바로 +1)
+     * - cycle_started_at = 현재 시간 (사이클 재시작)
+     * - currentQuizId = 다음 문제
+     * - updatedAt = 현재 시간
+     */
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query(
+        """
+        UPDATE queue_state
+        SET completed_count = 1,
+            cycle_started_at = CURRENT_TIMESTAMP,
+            current_quiz_id = :nextQuizId,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = 1
+        """,
+        nativeQuery = true
+    )
+    fun resetAndSetNextQuiz(nextQuizId: Long?): Int
 }

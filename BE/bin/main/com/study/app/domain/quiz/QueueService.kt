@@ -107,9 +107,8 @@ class QueueService(
 
         // 6. DB 레벨에서 원자적 업데이트
         if (isCycleComplete) {
-            // 한 바퀴 완료: completedCount = 0 + 다음 문제 포인터 이동
-            queueStateRepository.resetCompletedCount()
-            queueStateRepository.incrementCompletedAndSetNextQuiz(nextQuiz?.id)
+            // 한 바퀴 완료: 한 번의 SQL로 completedCount=1, cycle_started_at=현재, currentQuizId=다음 문제
+            queueStateRepository.resetAndSetNextQuiz(nextQuiz?.id)
         } else {
             // 일반적인 경우: completedCount + 1 + 다음 문제 포인터 이동
             queueStateRepository.incrementCompletedAndSetNextQuiz(nextQuiz?.id)

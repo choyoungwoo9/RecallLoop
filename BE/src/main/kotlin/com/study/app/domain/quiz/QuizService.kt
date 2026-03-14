@@ -86,16 +86,30 @@ class QuizService(
 
     /**
      * QueueState를 초기 상태로 리셋
+     * - currentQuiz: 첫 번째 문제로 설정
+     * - totalCount: 현재 전체 문제 수로 업데이트
+     * - completedCount: 보존 (새로운 totalCount를 초과하지 않도록 조정)
+     * - cycleStartedAt: 보존
      */
     private fun resetQueueState() {
         val allQuizzes = quizRepository.findAll()
         val firstQuiz = allQuizzes.minByOrNull { it.queueOrder }
+        val newTotalCount = allQuizzes.size
+
+        // 기존 QueueState 조회 (completedCount 보존을 위해)
+        val existingQueueState = queueStateRepository.findById(1L).orElse(null)
+        val preservedCompletedCount = if (existingQueueState != null) {
+            // 새로운 totalCount를 초과하지 않도록 조정
+            minOf(existingQueueState.completedCount, newTotalCount)
+        } else {
+            0
+        }
 
         val queueState = QueueState(
             id = 1,
             currentQuiz = firstQuiz,
-            totalCount = allQuizzes.size,
-            completedCount = 0
+            totalCount = newTotalCount,
+            completedCount = preservedCompletedCount
         )
 
         queueStateRepository.save(queueState)
