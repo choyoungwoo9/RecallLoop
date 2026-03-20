@@ -2,21 +2,26 @@ package com.study.app.domain.quiz
 
 import com.study.app.domain.quiz.dto.QueueStatusResponse
 import com.study.app.domain.quiz.dto.QueueSubmitResponse
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/queue")
 @CrossOrigin(origins = ["http://localhost:5173"])
+@Tag(name = "Queue", description = "퀴즈 풀이 큐 상태 및 제출 API")
 class QueueController(
     private val queueService: QueueService
 ) {
     @GetMapping("/status")
+    @Operation(summary = "큐 진행 상태 조회")
     fun getQueueStatus(): ResponseEntity<QueueStatusResponse> {
         return ResponseEntity.ok(queueService.getQueueStatus())
     }
 
     @GetMapping("/current")
+    @Operation(summary = "현재 퀴즈 조회")
     fun getCurrentQuiz(): ResponseEntity<Any> {
         val currentQuiz = queueService.getCurrentQuiz()
         return if (currentQuiz != null) {
@@ -27,6 +32,7 @@ class QueueController(
     }
 
     @PostMapping("/submit")
+    @Operation(summary = "퀴즈 답안 제출")
     fun submitAnswer(@RequestBody request: SubmitAnswerRequest): ResponseEntity<QueueSubmitResponse> {
         return ResponseEntity.ok(
             queueService.submitAnswer(
@@ -38,6 +44,7 @@ class QueueController(
     }
 
     @PostMapping("/initialize")
+    @Operation(summary = "큐 초기화")
     fun initializeQueue(): ResponseEntity<QueueStatusResponse> {
         return ResponseEntity.ok(queueService.initializeQueue())
     }

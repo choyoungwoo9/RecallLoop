@@ -24,6 +24,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
     implementation("org.xerial:sqlite-jdbc:3.44.1.0")
     implementation("org.hibernate.orm:hibernate-community-dialects:6.6.0.Final")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
