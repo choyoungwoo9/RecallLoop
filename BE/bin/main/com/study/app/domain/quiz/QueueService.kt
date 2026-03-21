@@ -12,6 +12,7 @@ class QueueService(
     private val queueStateRepository: QueueStateRepository,
     private val quizRepository: QuizRepository,
     private val quizAttemptRepository: QuizAttemptRepository,
+    private val quizAttemptHistoryRepository: QuizAttemptHistoryRepository,
     private val studyLogRepository: StudyLogRepository
 ) {
     fun getCurrentQuiz(): CurrentQuizResponse? {
@@ -54,10 +55,20 @@ class QueueService(
         submittedAnswer: String,
         elapsedSeconds: Int
     ): QueueSubmitResponse {
+        // ===== 신규: 사이클 완료 후 이전 사이클 attempt를 history로 이관 =====
+        val queueState = queueStateRepository.findById(1L).orElse(null)
+            ?: QueueState(id = 1L).let { queueStateRepository.save(it) }
+
+        if (queueState.cycleJustCompleted) {
+            migratePreviousCycleAttempts()
+            queueStateRepository.clearCycleJustCompletedFlag()
+        }
+        // =========================================================
+
         val quiz = quizRepository.findById(quizId)
             .orElseThrow { IllegalArgumentException("Quiz not found") }
 
-        // 1. QuizAttempt 저장
+        // 1. QuizAttempt 저장 (현재 사이클)
         val attempt = QuizAttempt(
             quiz = quiz,
             submittedAnswer = submittedAnswer,
@@ -65,35 +76,35 @@ class QueueService(
         )
         val savedAttempt = quizAttemptRepository.save(attempt)
 
-        // 2. 현재 QueueState 조회 (읽기 전용)
-        val queueState = queueStateRepository.findById(1L).orElse(null)
+        // 2. 현재 QueueState 다시 조회 (이관 후 최신 상태)
+        val updatedQueueState = queueStateRepository.findById(1L).orElse(null)
             ?: QueueState(id = 1L).let { queueStateRepository.save(it) }
 
         // 3. completedCount와 한 바퀴 완료 판정 (메모리에서만 계산)
         var isCycleComplete = false
-        val nextCompletedCount = queueState.completedCount + 1
-        if (nextCompletedCount >= queueState.totalCount && queueState.totalCount > 0) {
+        val nextCompletedCount = updatedQueueState.completedCount + 1
+        if (nextCompletedCount >= updatedQueueState.totalCount && updatedQueueState.totalCount > 0) {
             isCycleComplete = true
         }
 
         // 4. 다음 문제 계산 (메모리에서만)
-        val nextQueueOrder = (quiz.queueOrder % queueState.totalCount) + 1
+        val nextQueueOrder = (quiz.queueOrder % updatedQueueState.totalCount) + 1
         val nextQuiz = quizRepository.findByQueueOrder(nextQueueOrder).firstOrNull()
 
         // 5. 완주 감지: 현재 studyLog의 모든 문제가 현재 사이클에서 완료되었는지 확인
+        //    ⭐ 타임스탐프 비교 제거! 현재 QuizAttempt 테이블에만 있으면 현재 사이클
         val currentStudyLogId = quiz.studyLog.id!!
         val quizzesInCurrentStudyLog = quizRepository.findByStudyLogId(currentStudyLogId)
-        val cycleStartedAt = queueState.cycleStartedAt
 
         val completedStudyLog = if (quizzesInCurrentStudyLog.isEmpty()) {
             null
         } else {
-            // 이 studyLog의 모든 문제가 현재 사이클 이후에 attempt 기록이 있는가?
             val allQuizzesAttempted = quizzesInCurrentStudyLog.all { quizInLog ->
                 if (quizInLog.id == quizId) {
-                    true // 현재 제출 중인 문제는 방금 attempt 저장됨
+                    true // 현재 제출 중인 문제는 방금 저장됨
                 } else {
-                    quizAttemptRepository.findAttemptByQuizIdAfter(quizInLog.id!!, cycleStartedAt) != null
+                    quizAttemptRepository.findLatestByQuizId(quizInLog.id!!) != null
+                    // 현재 사이클의 QuizAttempt에 기록이 있으면 true
                 }
             }
 
@@ -111,10 +122,8 @@ class QueueService(
 
         // 6. DB 레벨에서 원자적 업데이트
         if (isCycleComplete) {
-            // 한 바퀴 완료: 한 번의 SQL로 completedCount=1, cycle_started_at=현재, currentQuizId=다음 문제
             queueStateRepository.resetAndSetNextQuiz(nextQuiz?.id)
         } else {
-            // 일반적인 경우: completedCount + 1 + 다음 문제 포인터 이동
             queueStateRepository.incrementCompletedAndSetNextQuiz(nextQuiz?.id)
         }
 
@@ -131,6 +140,34 @@ class QueueService(
         )
     }
 
+    /**
+     * 사이클 완료 후 이전 사이클의 모든 attempt를 history로 이관
+     * - 현재 QuizAttempt에서 모든 레코드 조회
+     * - QuizAttemptHistory로 이관
+     * - QuizAttempt 비우기
+     */
+    private fun migratePreviousCycleAttempts() {
+        // 현재 QuizAttempt 전체 조회
+        val currentAttempts = quizAttemptRepository.findAll()
+
+        if (currentAttempts.isNotEmpty()) {
+            // QuizAttemptHistory로 변환 후 저장
+            val historyRecords = currentAttempts.map { attempt ->
+                QuizAttemptHistory(
+                    quiz = attempt.quiz,
+                    submittedAnswer = attempt.submittedAnswer,
+                    elapsedSeconds = attempt.elapsedSeconds,
+                    attemptedAt = attempt.attemptedAt
+                )
+            }
+
+            quizAttemptHistoryRepository.saveAll(historyRecords)
+
+            // 현재 QuizAttempt 전부 삭제
+            quizAttemptRepository.deleteAll()
+        }
+    }
+
     fun initializeQueue(): QueueStatusResponse {
         // 모든 문제 조회
         val allQuizzes = quizRepository.findAll()
@@ -145,18 +182,23 @@ class QueueService(
                 currentQuiz = allQuizzes.firstOrNull(),
                 totalCount = totalCount,
                 completedCount = 0,
-                cycleStartedAt = LocalDateTime.now()
+                cycleStartedAt = LocalDateTime.now(),
+                cycleJustCompleted = false
             )
         } else {
             queueState = queueState.copy(
                 currentQuiz = allQuizzes.firstOrNull(),
                 totalCount = totalCount,
                 completedCount = 0,
-                cycleStartedAt = LocalDateTime.now()
+                cycleStartedAt = LocalDateTime.now(),
+                cycleJustCompleted = false
             )
         }
 
         queueStateRepository.save(queueState)
+
+        // 초기화 시 현재 attempt도 비우기
+        quizAttemptRepository.deleteAll()
 
         return getQueueStatus()
     }

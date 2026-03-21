@@ -29,12 +29,16 @@ interface QuizAttemptRepository : JpaRepository<QuizAttempt, Long> {
 
     @Query("""
         SELECT qa FROM QuizAttempt qa
-        WHERE qa.quiz.id = :quizId AND qa.attemptedAt > :since
+        WHERE qa.quiz.id = :quizId
         ORDER BY qa.attemptedAt DESC
         LIMIT 1
     """)
-    fun findAttemptByQuizIdAfter(
-        @Param("quizId") quizId: Long,
-        @Param("since") since: LocalDateTime
-    ): QuizAttempt?
+    fun findLatestByQuizId(quizId: Long): QuizAttempt?
+
+    @Query("""
+        SELECT qa FROM QuizAttempt qa
+        WHERE qa.quiz.studyLog.id = :studyLogId
+        ORDER BY qa.attemptedAt DESC
+    """)
+    fun findCurrentByStudyLogId(studyLogId: Long): List<QuizAttempt>
 }

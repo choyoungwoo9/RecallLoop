@@ -120,7 +120,8 @@ class QuizService(
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "StudyLog not found: $studyLogId") }
 
         val quizzes = quizRepository.findByStudyLogId(studyLogId)
-        val attempts = quizAttemptRepository.findByStudyLogId(studyLogId)
+        // 현재 사이클의 attempt만 조회 (타임스탐프 비교 제거!)
+        val attempts = quizAttemptRepository.findCurrentByStudyLogId(studyLogId)
 
         return com.study.app.domain.quiz.dto.CompletionSummaryResponse.from(studyLog, quizzes, attempts)
     }

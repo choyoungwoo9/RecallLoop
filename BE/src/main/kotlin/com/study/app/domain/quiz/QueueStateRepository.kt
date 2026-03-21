@@ -49,6 +49,7 @@ interface QueueStateRepository : JpaRepository<QueueState, Long> {
      * - completedCount = 1 (0에서 바로 +1)
      * - cycle_started_at = 현재 시간 (사이클 재시작)
      * - currentQuizId = 다음 문제
+     * - cycleJustCompleted = true (다음 submit에서 이관하기 위한 플래그)
      * - updatedAt = 현재 시간
      */
     @Modifying(clearAutomatically = true)
@@ -59,10 +60,26 @@ interface QueueStateRepository : JpaRepository<QueueState, Long> {
         SET completed_count = 1,
             cycle_started_at = CURRENT_TIMESTAMP,
             current_quiz_id = :nextQuizId,
+            cycle_just_completed = true,
             updated_at = CURRENT_TIMESTAMP
         WHERE id = 1
         """,
         nativeQuery = true
     )
     fun resetAndSetNextQuiz(nextQuizId: Long?): Int
+
+    /**
+     * 이관 완료 후 플래그 리셋
+     */
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query(
+        """
+        UPDATE queue_state
+        SET cycle_just_completed = false
+        WHERE id = 1
+        """,
+        nativeQuery = true
+    )
+    fun clearCycleJustCompletedFlag(): Int
 }

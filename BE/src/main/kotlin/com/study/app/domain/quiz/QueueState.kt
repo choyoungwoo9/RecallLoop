@@ -15,6 +15,7 @@ data class QueueState(
     var totalCount: Int = 0,
     var completedCount: Int = 0,
     var cycleStartedAt: LocalDateTime = LocalDateTime.now(),
+    var cycleJustCompleted: Boolean = false,
     @UpdateTimestamp
     var updatedAt: LocalDateTime = LocalDateTime.now()
 )
