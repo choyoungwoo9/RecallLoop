@@ -1,39 +1,24 @@
 .attempt-history {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 2rem 1rem;
 }
 
 .attempt-history__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
-  flex-wrap: wrap;
+  margin-bottom: 1.75rem;
 }
 
 .attempt-history__title {
   font-size: 1.5rem;
   font-weight: 700;
   color: #1a2a4a;
-  margin: 0;
+  margin: 0 0 0.35rem;
 }
 
-.attempt-history__filter {
-  padding: 0.5rem 1rem;
-  border: 1.5px solid #d0daea;
-  border-radius: 8px;
+.attempt-history__subtitle {
   font-size: 0.9rem;
-  color: #1a2a4a;
-  background: #fff;
-  cursor: pointer;
-  outline: none;
-  min-width: 180px;
-}
-
-.attempt-history__filter:focus {
-  border-color: #0052CC;
+  color: #6b7a99;
+  margin: 0;
 }
 
 .attempt-history__loading,
@@ -45,169 +30,224 @@
   font-size: 1rem;
 }
 
-.attempt-history__error {
-  color: #e53e3e;
+.attempt-history__error { color: #e53e3e; }
+.attempt-history__empty p { margin: 0.25rem 0; }
+
+/* ─── 카드 그리드 ─── */
+.history-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
 }
 
-.attempt-history__empty p {
-  margin: 0.25rem 0;
+@media (max-width: 600px) {
+  .history-cards {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* 날짜 그룹 */
-.attempt-history__group {
+.history-card {
+  background: #fff;
+  border: 1.5px solid #e8eef7;
+  border-radius: 12px;
+  padding: 1.25rem 1.25rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+
+.history-card:hover {
+  border-color: #0052CC;
+  box-shadow: 0 4px 16px rgba(0, 82, 204, 0.1);
+  transform: translateY(-2px);
+}
+
+.history-card__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a2a4a;
+  margin: 0 0 1rem;
+  line-height: 1.4;
+}
+
+.history-card__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem 1rem;
+}
+
+.history-card__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.history-card__stat-label {
+  font-size: 0.72rem;
+  color: #9aabb8;
+  font-weight: 500;
+}
+
+.history-card__stat-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0052CC;
+}
+
+/* ─── 상세 뷰 ─── */
+.attempt-detail__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 
-.attempt-history__group-date {
+.attempt-detail__back {
+  background: none;
+  border: 1.5px solid #d0daea;
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
   font-size: 0.85rem;
-  font-weight: 600;
-  color: #6b7a99;
-  padding: 0.4rem 0;
-  border-bottom: 1.5px solid #e8eef7;
-  margin-bottom: 0.5rem;
+  color: #4a5a7a;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
 }
 
-.attempt-history__group-items {
+.attempt-detail__back:hover {
+  border-color: #0052CC;
+  color: #0052CC;
+}
+
+.attempt-detail__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a2a4a;
+  margin: 0;
+}
+
+.attempt-detail__count {
+  font-size: 0.82rem;
+  color: #9aabb8;
+  background: #f0f4fa;
+  padding: 0.2rem 0.55rem;
+  border-radius: 99px;
+}
+
+/* ─── 문제 행 ─── */
+.quiz-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-/* 개별 항목 */
-.attempt-item {
+.quiz-row {
   background: #fff;
   border: 1.5px solid #e8eef7;
   border-radius: 10px;
-  padding: 0.85rem 1rem;
+  padding: 0.9rem 1rem;
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.attempt-item:hover {
+.quiz-row:hover {
   border-color: #0052CC;
   box-shadow: 0 2px 8px rgba(0, 82, 204, 0.08);
 }
 
-.attempt-item__header {
+.quiz-row__main {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
-.attempt-item__meta {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.attempt-item__study-log {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #0052CC;
-  background: #eef3ff;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-}
-
-.attempt-item__badge {
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
-}
-
-.attempt-item__badge--current {
-  background: #e6f7f5;
-  color: #00875a;
-}
-
-.attempt-item__right {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.attempt-item__time {
-  font-size: 0.78rem;
-  color: #6b7a99;
-  white-space: nowrap;
-}
-
-.attempt-item__datetime {
-  font-size: 0.78rem;
-  color: #9aabb8;
-  white-space: nowrap;
-}
-
-.attempt-item__arrow {
-  font-size: 0.7rem;
-  color: #9aabb8;
-  transition: transform 0.2s;
-  display: inline-block;
-}
-
-.attempt-item__arrow--up {
-  transform: rotate(180deg);
-}
-
-.attempt-item__question {
-  margin: 0.5rem 0 0;
-  font-size: 0.92rem;
-  color: #2d3748;
+.quiz-row__question {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #1a2a4a;
+  font-weight: 500;
   line-height: 1.5;
   word-break: break-word;
 }
 
-/* 펼쳐진 상세 */
-.attempt-item__detail {
+.quiz-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.quiz-row__meta-item {
+  font-size: 0.78rem;
+  color: #6b7a99;
+}
+
+.quiz-row__arrow {
+  font-size: 0.7rem;
+  color: #9aabb8;
+  transition: transform 0.2s;
+  display: inline-block;
+  margin-left: auto;
+}
+
+.quiz-row__arrow--up {
+  transform: rotate(180deg);
+}
+
+/* ─── 답변 비교 ─── */
+.quiz-row__detail {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid #e8eef7;
 }
 
-.attempt-item__answer-row {
+.quiz-row__answer-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
 }
 
 @media (max-width: 520px) {
-  .attempt-item__answer-row {
+  .quiz-row__answer-row {
     grid-template-columns: 1fr;
   }
 }
 
-.attempt-item__answer {
+.quiz-row__answer {
   border-radius: 8px;
-  padding: 0.6rem 0.75rem;
+  padding: 0.65rem 0.75rem;
 }
 
-.attempt-item__answer--mine {
+.quiz-row__answer--mine {
   background: #fff8f0;
   border: 1px solid #ffd8a8;
 }
 
-.attempt-item__answer--correct {
+.quiz-row__answer--correct {
   background: #f0faf5;
   border: 1px solid #b2dfdb;
 }
 
-.attempt-item__answer-label {
-  font-size: 0.75rem;
+.quiz-row__answer-label {
+  font-size: 0.72rem;
   font-weight: 600;
   color: #6b7a99;
   display: block;
   margin-bottom: 0.3rem;
 }
 
-.attempt-item__answer-text {
+.quiz-row__answer-text {
   margin: 0;
   font-size: 0.88rem;
   color: #2d3748;
   white-space: pre-wrap;
   word-break: break-word;
   line-height: 1.5;
+}
+
+.quiz-row__answer-time {
+  display: block;
+  font-size: 0.72rem;
+  color: #9aabb8;
+  margin-top: 0.3rem;
 }
