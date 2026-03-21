@@ -29,7 +29,7 @@ interface QuizAttemptRepository : JpaRepository<QuizAttempt, Long> {
 
     @Query("""
         SELECT qa FROM QuizAttempt qa
-        WHERE qa.quiz.id = :quizId AND qa.attemptedAt >= :since
+        WHERE qa.quiz.id = :quizId AND qa.attemptedAt > :since
         ORDER BY qa.attemptedAt DESC
         LIMIT 1
     """)

@@ -150,9 +150,47 @@ class QueueIntegrationTest @Autowired constructor(
     }
 
     @Test
-    @DisplayName("완주 감지: 특정 StudyLog 모든 문제 제출 → completedStudyLog 반환")
+    @DisplayName("완주 감지: 특정 StudyLog 모든 문제 제출 → completedStudyLog 반환 (같은 사이클 내)")
     fun testCompletionDetection() {
-        // 3개 문제 모두 제출
+        // Quiz 1, 2 제출 (아직 완주 아님)
+        for (i in 0..1) {
+            mockMvc.perform(
+                post("/api/queue/submit")
+                    .contentType("application/json")
+                    .content(objectMapper.writeValueAsString(
+                        mapOf(
+                            "quizId" to quizzes[i].id,
+                            "submittedAnswer" to "답 $i",
+                            "elapsedSeconds" to 30
+                        )
+                    ))
+            ).andExpect(status().isOk)
+        }
+
+        // 마지막(3번째) 제출 - completedStudyLog 확인
+        val response = mockMvc.perform(
+            post("/api/queue/submit")
+                .contentType("application/json")
+                .content(objectMapper.writeValueAsString(
+                    mapOf(
+                        "quizId" to quizzes[2].id,
+                        "submittedAnswer" to "답 2",
+                        "elapsedSeconds" to 30
+                    )
+                ))
+        ).andExpect(status().isOk).andReturn()
+
+        val result = objectMapper.readValue(response.response.contentAsString, Map::class.java)
+        @Suppress("UNCHECKED_CAST")
+        val completedStudyLog = result["completedStudyLog"] as? Map<String, Any>
+        assert(completedStudyLog != null)
+        assert(completedStudyLog!!["title"] == "테스트")
+    }
+
+    @Test
+    @DisplayName("완주 감지: 새 사이클 시작 후 다시 풀어도 이전 cycle attempt는 제외")
+    fun testCompletionDetectionNextCycle() {
+        // 1사이클: 3개 문제 모두 제출
         for (i in 0..2) {
             mockMvc.perform(
                 post("/api/queue/submit")
@@ -167,7 +205,7 @@ class QueueIntegrationTest @Autowired constructor(
             ).andExpect(status().isOk)
         }
 
-        // 마지막 제출 결과 확인
+        // 2사이클: Quiz 0 제출 - completedStudyLog가 없어야 함 (아직 1, 2를 못 풀음)
         val response = mockMvc.perform(
             post("/api/queue/submit")
                 .contentType("application/json")
@@ -183,8 +221,7 @@ class QueueIntegrationTest @Autowired constructor(
         val result = objectMapper.readValue(response.response.contentAsString, Map::class.java)
         @Suppress("UNCHECKED_CAST")
         val completedStudyLog = result["completedStudyLog"] as? Map<String, Any>
-        assert(completedStudyLog != null)
-        assert(completedStudyLog!!["title"] == "테스트")
+        assert(completedStudyLog == null) // 첫 제출이므로 완주 아님
     }
 
     @Test

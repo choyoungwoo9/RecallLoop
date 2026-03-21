@@ -90,7 +90,11 @@ class QueueService(
         } else {
             // 이 studyLog의 모든 문제가 현재 사이클 이후에 attempt 기록이 있는가?
             val allQuizzesAttempted = quizzesInCurrentStudyLog.all { quizInLog ->
-                quizAttemptRepository.findAttemptByQuizIdAfter(quizInLog.id!!, cycleStartedAt) != null
+                if (quizInLog.id == quizId) {
+                    true // 현재 제출 중인 문제는 방금 attempt 저장됨
+                } else {
+                    quizAttemptRepository.findAttemptByQuizIdAfter(quizInLog.id!!, cycleStartedAt) != null
+                }
             }
 
             if (allQuizzesAttempted) {
