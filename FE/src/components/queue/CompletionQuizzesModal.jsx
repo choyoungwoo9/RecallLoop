@@ -58,9 +58,9 @@ function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
             </>
           ) : (
             <>
-              <h2 className="modal-title">모든 문제 완주!</h2>
+              <h2 className="modal-title">{studyLog.title} 완료!</h2>
               <p className="modal-subtitle">
-                <strong>{studyLog.title}</strong>의 모든 문제를 풀었습니다
+                모든 문제를 완주했습니다
               </p>
             </>
           )}
