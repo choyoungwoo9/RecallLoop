@@ -1,5 +1,5 @@
 .attempt-history {
-  max-width: 900px;
+  max-width: 800px;
   margin: 0 auto;
   padding: 2rem 1rem;
 }
@@ -33,168 +33,156 @@
 .attempt-history__error { color: #e53e3e; }
 .attempt-history__empty p { margin: 0.25rem 0; }
 
-/* ─── 카드 그리드 ─── */
-.history-cards {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+/* ─── 사이클 목록 ─── */
+.cycle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-@media (max-width: 600px) {
-  .history-cards {
-    grid-template-columns: 1fr;
-  }
-}
-
-.history-card {
+/* ─── 사이클 섹션 ─── */
+.cycle-section {
   background: #fff;
   border: 1.5px solid #e8eef7;
   border-radius: 12px;
-  padding: 1.25rem 1.25rem 1rem;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+  overflow: hidden;
 }
 
-.history-card:hover {
-  border-color: #0052CC;
-  box-shadow: 0 4px 16px rgba(0, 82, 204, 0.1);
-  transform: translateY(-2px);
-}
-
-.history-card__title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #1a2a4a;
-  margin: 0 0 1rem;
-  line-height: 1.4;
-}
-
-.history-card__stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem 1rem;
-}
-
-.history-card__stat {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.history-card__stat-label {
-  font-size: 0.72rem;
-  color: #9aabb8;
-  font-weight: 500;
-}
-
-.history-card__stat-value {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #0052CC;
-}
-
-/* ─── 상세 뷰 ─── */
-.attempt-detail__header {
+.cycle-section__header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.attempt-detail__back {
-  background: none;
-  border: 1.5px solid #d0daea;
-  border-radius: 8px;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.85rem;
-  color: #4a5a7a;
+  justify-content: space-between;
+  padding: 0.9rem 1.1rem;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
-  white-space: nowrap;
-}
-
-.attempt-detail__back:hover {
-  border-color: #0052CC;
-  color: #0052CC;
-}
-
-.attempt-detail__title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1a2a4a;
-  margin: 0;
-}
-
-.attempt-detail__count {
-  font-size: 0.82rem;
-  color: #9aabb8;
-  background: #f0f4fa;
-  padding: 0.2rem 0.55rem;
-  border-radius: 99px;
-}
-
-/* ─── 문제 행 ─── */
-.quiz-list {
-  display: flex;
-  flex-direction: column;
+  transition: background 0.12s;
   gap: 0.5rem;
 }
 
-.quiz-row {
-  background: #fff;
-  border: 1.5px solid #e8eef7;
-  border-radius: 10px;
-  padding: 0.9rem 1rem;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
+.cycle-section__header:hover {
+  background: #f5f8fd;
 }
 
-.quiz-row:hover {
-  border-color: #0052CC;
-  box-shadow: 0 2px 8px rgba(0, 82, 204, 0.08);
-}
-
-.quiz-row__main {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.quiz-row__question {
-  margin: 0;
-  font-size: 0.95rem;
-  color: #1a2a4a;
-  font-weight: 500;
-  line-height: 1.5;
-  word-break: break-word;
-}
-
-.quiz-row__meta {
+.cycle-section__title-row {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.quiz-row__meta-item {
+.cycle-section__badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.18rem 0.5rem;
+  border-radius: 99px;
+}
+
+.cycle-section__badge--current {
+  background: #e6f7f5;
+  color: #007a63;
+}
+
+.cycle-section__label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a2a4a;
+}
+
+.cycle-section__right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.cycle-section__count {
   font-size: 0.78rem;
-  color: #6b7a99;
+  color: #9aabb8;
+  white-space: nowrap;
 }
 
-.quiz-row__arrow {
+.cycle-section__arrow {
   font-size: 0.7rem;
   color: #9aabb8;
   transition: transform 0.2s;
   display: inline-block;
-  margin-left: auto;
 }
 
-.quiz-row__arrow--up {
+.cycle-section__arrow--up {
   transform: rotate(180deg);
 }
 
-/* ─── 답변 비교 ─── */
+.cycle-section__body {
+  border-top: 1px solid #e8eef7;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── 사이클 내 아이템 ─── */
+.cycle-item {
+  padding: 0.75rem 1.1rem;
+  border-bottom: 1px solid #f0f4fa;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.cycle-item:last-child {
+  border-bottom: none;
+}
+
+.cycle-item:hover {
+  background: #f8fafd;
+}
+
+.cycle-item__main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.cycle-item__study-log {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #0052CC;
+  background: #eef3ff;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.cycle-item__question {
+  flex: 1;
+  margin: 0;
+  font-size: 0.88rem;
+  color: #2d3748;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.cycle-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.cycle-item__time {
+  font-size: 0.75rem;
+  color: #9aabb8;
+  white-space: nowrap;
+}
+
+.cycle-item__arrow {
+  font-size: 0.65rem;
+  color: #9aabb8;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.cycle-item__arrow--up {
+  transform: rotate(180deg);
+}
+
+/* ─── 답변 비교 (QuizRow + CycleAttemptItem 공용) ─── */
 .quiz-row__detail {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
@@ -250,4 +238,72 @@
   font-size: 0.72rem;
   color: #9aabb8;
   margin-top: 0.3rem;
+}
+
+/* ─── QuizRow (StudyLogDetailPage 풀이 기록 탭에서도 사용) ─── */
+.quiz-row {
+  background: #fff;
+  border: 1.5px solid #e8eef7;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.quiz-row:hover {
+  border-color: #0052CC;
+  box-shadow: 0 2px 8px rgba(0, 82, 204, 0.08);
+}
+
+.quiz-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.quiz-row__question {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #1a2a4a;
+  font-weight: 500;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.quiz-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.quiz-row__meta-item {
+  font-size: 0.78rem;
+  color: #6b7a99;
+}
+
+.quiz-row__arrow {
+  font-size: 0.7rem;
+  color: #9aabb8;
+  transition: transform 0.2s;
+  display: inline-block;
+  margin-left: auto;
+}
+
+.quiz-row__arrow--up {
+  transform: rotate(180deg);
+}
+
+/* ─── StudyLogDetailPage 풀이 기록 탭 컨테이너 ─── */
+.attempt-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.attempt-tab__empty {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7a99;
+  font-size: 0.9rem;
 }

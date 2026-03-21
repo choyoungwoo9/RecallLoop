@@ -14,7 +14,8 @@ data class AttemptHistoryItem(
     val attemptedAt: LocalDateTime,
     val studyLogId: Long,
     val studyLogTitle: String,
-    val isCurrent: Boolean
+    val isCurrent: Boolean,
+    val migratedAt: LocalDateTime?
 ) {
     companion object {
         fun fromCurrent(attempt: QuizAttempt) = AttemptHistoryItem(
@@ -27,7 +28,8 @@ data class AttemptHistoryItem(
             attemptedAt = attempt.attemptedAt,
             studyLogId = attempt.quiz.studyLog.id!!,
             studyLogTitle = attempt.quiz.studyLog.title,
-            isCurrent = true
+            isCurrent = true,
+            migratedAt = null
         )
 
         fun fromHistory(history: QuizAttemptHistory) = AttemptHistoryItem(
@@ -40,7 +42,8 @@ data class AttemptHistoryItem(
             attemptedAt = history.attemptedAt,
             studyLogId = history.quiz.studyLog.id!!,
             studyLogTitle = history.quiz.studyLog.title,
-            isCurrent = false
+            isCurrent = false,
+            migratedAt = history.migratedAt
         )
     }
 }

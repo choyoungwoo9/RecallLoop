@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { getStudyLog, deleteStudyLog } from '../api/studyLog'
 import { getQuizConfigs, createQuizConfig, deleteQuizConfig, generateQuizzes } from '../api/quizConfig'
 import { getQuizzesByStudyLog, deleteQuiz } from '../api/quiz'
+import { getAttemptHistory } from '../api/attemptHistory'
+import { buildQuizStats, QuizRow } from './AttemptHistoryPage'
 import Layout from '../components/common/Layout'
 import Button from '../components/common/Button'
 import Input from '../components/common/Input'
@@ -29,6 +31,9 @@ function StudyLogDetailPage() {
   const [creatingConfig, setCreatingConfig] = useState(false)
   const [generatingQuizzes, setGeneratingQuizzes] = useState(null)
   const [activeTab, setActiveTab] = useState('content')
+  const [attemptItems, setAttemptItems] = useState([])
+  const [attemptsLoaded, setAttemptsLoaded] = useState(false)
+  const [attemptsLoading, setAttemptsLoading] = useState(false)
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     title: '',
@@ -224,6 +229,20 @@ function StudyLogDetailPage() {
     })
   }
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    if (tab === 'attempts' && !attemptsLoaded) {
+      setAttemptsLoading(true)
+      getAttemptHistory(id)
+        .then(data => {
+          setAttemptItems(data)
+          setAttemptsLoaded(true)
+        })
+        .catch(() => {})
+        .finally(() => setAttemptsLoading(false))
+    }
+  }
+
   const handleDelete = () => {
     setConfirmModal({
       isOpen: true,
@@ -354,6 +373,26 @@ function StudyLogDetailPage() {
               )
             },
             {
+              id: 'attempts',
+              label: '풀이 기록',
+              icon: null,
+              content: (
+                <>
+                  {attemptsLoading ? (
+                    <LoadingSpinner size="sm" text="풀이 기록 불러오는 중..." />
+                  ) : attemptsLoaded && attemptItems.length === 0 ? (
+                    <div className="attempt-tab__empty">아직 이 기록의 풀이 이력이 없습니다.</div>
+                  ) : (
+                    <div className="attempt-tab">
+                      {buildQuizStats(attemptItems, Number(id)).map(qs => (
+                        <QuizRow key={qs.quizId} quizStat={qs} />
+                      ))}
+                    </div>
+                  )}
+                </>
+              )
+            },
+            {
               id: 'settings',
               label: '문제 생성 설정',
               icon: null,
@@ -438,7 +477,7 @@ function StudyLogDetailPage() {
             }
           ]}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
         />
 
         <ConfirmModal

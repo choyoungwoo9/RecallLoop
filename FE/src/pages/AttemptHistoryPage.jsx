@@ -3,44 +3,21 @@ import Layout from '../components/common/Layout'
 import { getAttemptHistory } from '../api/attemptHistory'
 import './AttemptHistoryPage.css'
 
-function formatDate(dateStr) {
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })
-}
+// ─── 유틸 함수 (StudyLogDetailPage에서도 재사용) ─────────────────────────
 
-function formatAvgSeconds(seconds) {
+export function formatAvgSeconds(seconds) {
   if (seconds < 60) return `${Math.round(seconds)}초`
   return `${Math.floor(seconds / 60)}분 ${Math.round(seconds % 60)}초`
 }
 
-function buildStudyLogSummaries(items) {
-  const map = {}
-  items.forEach(item => {
-    if (!map[item.studyLogId]) {
-      map[item.studyLogId] = {
-        studyLogId: item.studyLogId,
-        studyLogTitle: item.studyLogTitle,
-        totalAttempts: 0,
-        quizIds: new Set(),
-        totalElapsed: 0,
-        lastAttemptedAt: item.attemptedAt,
-      }
-    }
-    const g = map[item.studyLogId]
-    g.totalAttempts++
-    g.quizIds.add(item.quizId)
-    g.totalElapsed += item.elapsedSeconds
-    if (item.attemptedAt > g.lastAttemptedAt) g.lastAttemptedAt = item.attemptedAt
-  })
-  return Object.values(map).map(g => ({
-    ...g,
-    uniqueQuizCount: g.quizIds.size,
-    avgElapsedSeconds: g.totalAttempts > 0 ? g.totalElapsed / g.totalAttempts : 0,
-  })).sort((a, b) => b.lastAttemptedAt.localeCompare(a.lastAttemptedAt))
+export function formatDateShort(dateStr) {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })
 }
 
-function buildQuizStats(items, studyLogId) {
-  const filtered = items.filter(i => i.studyLogId === studyLogId)
+// 학습 기록 ID 기준 문제별 통계 집계
+export function buildQuizStats(items, studyLogId) {
+  const filtered = studyLogId ? items.filter(i => i.studyLogId === studyLogId) : items
   const map = {}
   filtered.forEach(item => {
     if (!map[item.quizId]) {
@@ -51,51 +28,28 @@ function buildQuizStats(items, studyLogId) {
         attemptCount: 0,
         totalElapsed: 0,
         lastAttemptedAt: item.attemptedAt,
-        attempts: [],
+        latestAttempt: item,
       }
     }
     const g = map[item.quizId]
     g.attemptCount++
     g.totalElapsed += item.elapsedSeconds
-    if (item.attemptedAt > g.lastAttemptedAt) g.lastAttemptedAt = item.attemptedAt
-    g.attempts.push(item)
+    if (item.attemptedAt > g.lastAttemptedAt) {
+      g.lastAttemptedAt = item.attemptedAt
+      g.latestAttempt = item
+    }
   })
   return Object.values(map).map(g => ({
     ...g,
     avgElapsedSeconds: g.attemptCount > 0 ? g.totalElapsed / g.attemptCount : 0,
-    attempts: g.attempts.sort((a, b) => b.attemptedAt.localeCompare(a.attemptedAt)),
   })).sort((a, b) => b.lastAttemptedAt.localeCompare(a.lastAttemptedAt))
 }
 
-function StudyLogCard({ summary, onClick }) {
-  return (
-    <div className="history-card" onClick={onClick}>
-      <h3 className="history-card__title">{summary.studyLogTitle}</h3>
-      <div className="history-card__stats">
-        <div className="history-card__stat">
-          <span className="history-card__stat-label">문제 수</span>
-          <span className="history-card__stat-value">{summary.uniqueQuizCount}개</span>
-        </div>
-        <div className="history-card__stat">
-          <span className="history-card__stat-label">총 풀이</span>
-          <span className="history-card__stat-value">{summary.totalAttempts}회</span>
-        </div>
-        <div className="history-card__stat">
-          <span className="history-card__stat-label">평균 소요</span>
-          <span className="history-card__stat-value">{formatAvgSeconds(summary.avgElapsedSeconds)}</span>
-        </div>
-        <div className="history-card__stat">
-          <span className="history-card__stat-label">마지막 풀이</span>
-          <span className="history-card__stat-value">{formatDate(summary.lastAttemptedAt)}</span>
-        </div>
-      </div>
-    </div>
-  )
-}
+// ─── QuizRow 컴포넌트 (StudyLogDetailPage에서도 재사용) ────────────────────
 
-function QuizRow({ quizStat }) {
+export function QuizRow({ quizStat }) {
   const [expanded, setExpanded] = useState(false)
-  const latest = quizStat.attempts[0]
+  const latest = quizStat.latestAttempt
 
   return (
     <div className="quiz-row" onClick={() => setExpanded(e => !e)}>
@@ -104,7 +58,7 @@ function QuizRow({ quizStat }) {
         <div className="quiz-row__meta">
           <span className="quiz-row__meta-item">{quizStat.attemptCount}회 풀이</span>
           <span className="quiz-row__meta-item">평균 {formatAvgSeconds(quizStat.avgElapsedSeconds)}</span>
-          <span className="quiz-row__meta-item">최근 {formatDate(quizStat.lastAttemptedAt)}</span>
+          <span className="quiz-row__meta-item">최근 {formatDateShort(quizStat.lastAttemptedAt)}</span>
           <span className={`quiz-row__arrow ${expanded ? 'quiz-row__arrow--up' : ''}`}>▼</span>
         </div>
       </div>
@@ -127,11 +81,111 @@ function QuizRow({ quizStat }) {
   )
 }
 
+// ─── 사이클 그룹핑 ──────────────────────────────────────────────────────
+
+function truncateToMinute(dateStr) {
+  // "2026-03-21T14:35:22.xxx" → "2026-03-21T14:35"
+  return dateStr ? dateStr.substring(0, 16) : null
+}
+
+function groupByCycle(items) {
+  const currentItems = items.filter(i => i.isCurrent)
+  const historyItems = items.filter(i => !i.isCurrent)
+
+  // 이전 사이클들: migratedAt 분 단위로 그룹핑
+  const cycleMap = {}
+  historyItems.forEach(item => {
+    const key = truncateToMinute(item.migratedAt)
+    if (!cycleMap[key]) {
+      cycleMap[key] = { key, migratedAt: item.migratedAt, items: [] }
+    }
+    cycleMap[key].items.push(item)
+  })
+
+  const pastCycles = Object.values(cycleMap).sort((a, b) =>
+    b.migratedAt.localeCompare(a.migratedAt)
+  )
+
+  const result = []
+  if (currentItems.length > 0) {
+    result.push({ label: '현재 사이클', isCurrent: true, items: currentItems })
+  }
+  pastCycles.forEach((cycle, idx) => {
+    const date = new Date(cycle.migratedAt)
+    const label = `${date.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })} 완료 (사이클 ${pastCycles.length - idx})`
+    result.push({ label, isCurrent: false, items: cycle.items })
+  })
+
+  return result
+}
+
+// ─── CycleAttemptItem ─────────────────────────────────────────────────
+
+function CycleAttemptItem({ item }) {
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div className="cycle-item" onClick={() => setExpanded(e => !e)}>
+      <div className="cycle-item__main">
+        <span className="cycle-item__study-log">{item.studyLogTitle}</span>
+        <p className="cycle-item__question">{item.question}</p>
+        <div className="cycle-item__meta">
+          <span className="cycle-item__time">{item.elapsedSeconds}초</span>
+          <span className={`cycle-item__arrow ${expanded ? 'cycle-item__arrow--up' : ''}`}>▼</span>
+        </div>
+      </div>
+      {expanded && (
+        <div className="quiz-row__detail">
+          <div className="quiz-row__answer-row">
+            <div className="quiz-row__answer quiz-row__answer--mine">
+              <span className="quiz-row__answer-label">내 답변</span>
+              <p className="quiz-row__answer-text">{item.submittedAnswer || '(미입력)'}</p>
+            </div>
+            <div className="quiz-row__answer quiz-row__answer--correct">
+              <span className="quiz-row__answer-label">정답</span>
+              <p className="quiz-row__answer-text">{item.correctAnswer}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── CycleSection ────────────────────────────────────────────────────
+
+function CycleSection({ cycle, defaultOpen }) {
+  const [open, setOpen] = useState(defaultOpen)
+
+  return (
+    <div className="cycle-section">
+      <div className="cycle-section__header" onClick={() => setOpen(o => !o)}>
+        <div className="cycle-section__title-row">
+          {cycle.isCurrent && <span className="cycle-section__badge cycle-section__badge--current">진행 중</span>}
+          <span className="cycle-section__label">{cycle.label}</span>
+        </div>
+        <div className="cycle-section__right">
+          <span className="cycle-section__count">{cycle.items.length}문제</span>
+          <span className={`cycle-section__arrow ${open ? 'cycle-section__arrow--up' : ''}`}>▼</span>
+        </div>
+      </div>
+      {open && (
+        <div className="cycle-section__body">
+          {cycle.items.map(item => (
+            <CycleAttemptItem key={`${item.isCurrent ? 'c' : 'h'}-${item.id}`} item={item} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── 페이지 ─────────────────────────────────────────────────────────
+
 function AttemptHistoryPage() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [selectedStudyLogId, setSelectedStudyLogId] = useState(null)
 
   useEffect(() => {
     getAttemptHistory()
@@ -140,73 +194,34 @@ function AttemptHistoryPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const summaries = buildStudyLogSummaries(items)
-  const selectedSummary = summaries.find(s => s.studyLogId === selectedStudyLogId)
-  const quizStats = selectedStudyLogId ? buildQuizStats(items, selectedStudyLogId) : []
+  const cycles = groupByCycle(items)
 
   if (loading) {
-    return (
-      <Layout>
-        <div className="attempt-history__loading">불러오는 중...</div>
-      </Layout>
-    )
+    return <Layout><div className="attempt-history__loading">불러오는 중...</div></Layout>
   }
-
   if (error) {
-    return (
-      <Layout>
-        <div className="attempt-history__error">오류가 발생했습니다: {error}</div>
-      </Layout>
-    )
+    return <Layout><div className="attempt-history__error">오류가 발생했습니다: {error}</div></Layout>
   }
 
   return (
     <Layout>
       <div className="attempt-history">
-        {selectedStudyLogId === null ? (
-          <>
-            <div className="attempt-history__header">
-              <h2 className="attempt-history__title">풀이 기록</h2>
-              <p className="attempt-history__subtitle">학습 기록을 클릭해 문제별 이력을 확인하세요</p>
-            </div>
+        <div className="attempt-history__header">
+          <h2 className="attempt-history__title">풀이 기록</h2>
+          <p className="attempt-history__subtitle">사이클 단위로 지금까지의 풀이를 확인하세요</p>
+        </div>
 
-            {summaries.length === 0 ? (
-              <div className="attempt-history__empty">
-                <p>아직 풀이 기록이 없습니다.</p>
-                <p>문제를 풀면 여기에 기록이 쌓입니다.</p>
-              </div>
-            ) : (
-              <div className="history-cards">
-                {summaries.map(s => (
-                  <StudyLogCard
-                    key={s.studyLogId}
-                    summary={s}
-                    onClick={() => setSelectedStudyLogId(s.studyLogId)}
-                  />
-                ))}
-              </div>
-            )}
-          </>
+        {cycles.length === 0 ? (
+          <div className="attempt-history__empty">
+            <p>아직 풀이 기록이 없습니다.</p>
+            <p>문제를 풀면 여기에 기록이 쌓입니다.</p>
+          </div>
         ) : (
-          <>
-            <div className="attempt-detail__header">
-              <button className="attempt-detail__back" onClick={() => setSelectedStudyLogId(null)}>
-                ← 뒤로가기
-              </button>
-              <h2 className="attempt-detail__title">{selectedSummary?.studyLogTitle}</h2>
-              <span className="attempt-detail__count">{quizStats.length}개 문제</span>
-            </div>
-
-            <div className="quiz-list">
-              {quizStats.length === 0 ? (
-                <div className="attempt-history__empty">이 기록의 풀이 이력이 없습니다.</div>
-              ) : (
-                quizStats.map(qs => (
-                  <QuizRow key={qs.quizId} quizStat={qs} />
-                ))
-              )}
-            </div>
-          </>
+          <div className="cycle-list">
+            {cycles.map((cycle, idx) => (
+              <CycleSection key={cycle.label} cycle={cycle} defaultOpen={idx === 0} />
+            ))}
+          </div>
         )}
       </div>
     </Layout>
