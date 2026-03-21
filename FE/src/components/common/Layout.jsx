@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import logo from '../../assets/logo.svg'
-import { HomeIcon, QuizIcon } from './Icons'
+import { HomeIcon, QuizIcon, HistoryIcon } from './Icons'
 import './Layout.css'
 
 function Layout({ children }) {
@@ -35,6 +35,15 @@ function Layout({ children }) {
                 >
                   <QuizIcon className="layout__header-nav-icon" />
                   <span className="layout__header-nav-text">문제 풀기</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/history"
+                  className={`layout__header-nav-link ${isActive('/history') ? 'layout__header-nav-link--active' : ''}`}
+                >
+                  <HistoryIcon className="layout__header-nav-icon" />
+                  <span className="layout__header-nav-text">풀이 기록</span>
                 </Link>
               </li>
             </ul>

@@ -86,6 +86,21 @@ export const EditIcon = ({ className = '' }) => (
   </svg>
 )
 
+export const HistoryIcon = ({ className = '' }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="12 8 12 12 14 14" />
+    <path d="M3.05 11a9 9 0 1 1 .5 4M3 21v-6h6" />
+  </svg>
+)
+
 export const BookIcon = ({ className = '' }) => (
   <svg
     className={className}

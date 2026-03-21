@@ -4,6 +4,7 @@ import StudyLogCreatePage from './pages/StudyLogCreatePage'
 import StudyLogDetailPage from './pages/StudyLogDetailPage'
 import QueueStatusPage from './pages/QueueStatusPage'
 import QuizSolvePage from './pages/QuizSolvePage'
+import AttemptHistoryPage from './pages/AttemptHistoryPage'
 import './App.css'
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
       <Route path="/study-logs/:id" element={<StudyLogDetailPage />} />
       <Route path="/queue" element={<QueueStatusPage />} />
       <Route path="/queue/solve" element={<QuizSolvePage />} />
+      <Route path="/history" element={<AttemptHistoryPage />} />
     </Routes>
   )
 }
