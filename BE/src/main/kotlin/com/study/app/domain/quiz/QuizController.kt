@@ -71,12 +71,14 @@ class CompletionSummaryController(
         return ResponseEntity.ok(
             quizService.saveCompletionSummaryEvaluation(
                 studyLogId = studyLogId,
-                selfEvaluation = request.selfEvaluation
+                selfEvaluation = request.selfEvaluation,
+                poorQualityQuizIds = request.poorQualityQuizIds
             )
         )
     }
 }
 
 data class CompletionSummaryEvaluationRequest(
-    val selfEvaluation: SelfEvaluation
+    val selfEvaluation: SelfEvaluation,
+    val poorQualityQuizIds: List<Long> = emptyList()
 )

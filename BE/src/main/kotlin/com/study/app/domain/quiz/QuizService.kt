@@ -136,7 +136,8 @@ class QuizService(
 
     fun saveCompletionSummaryEvaluation(
         studyLogId: Long,
-        selfEvaluation: SelfEvaluation
+        selfEvaluation: SelfEvaluation,
+        poorQualityQuizIds: List<Long>
     ): CompletionSummaryEvaluationResponse {
         val activeQuizzes = quizRepository.findByStudyLogIdAndIsActiveInQueueTrueOrderByQueueOrder(studyLogId)
         if (activeQuizzes.isEmpty()) {
@@ -152,13 +153,26 @@ class QuizService(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "StudyLog is not completed in current cycle: $studyLogId")
         }
 
-        attempts.forEach { it.selfEvaluation = selfEvaluation }
+        val poorQualityQuizIdSet = poorQualityQuizIds.toSet()
+        if (!activeQuizIds.containsAll(poorQualityQuizIdSet)) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Poor-quality quiz ids are invalid for StudyLog: $studyLogId")
+        }
+
+        attempts.forEach { attempt ->
+            attempt.selfEvaluation = selfEvaluation
+            attempt.problemFeedback = if (attempt.quiz.id in poorQualityQuizIdSet) {
+                ProblemFeedback.DISLIKED
+            } else {
+                ProblemFeedback.NONE
+            }
+        }
         quizAttemptRepository.saveAll(attempts)
 
         return CompletionSummaryEvaluationResponse(
             studyLogId = studyLogId,
             selfEvaluation = selfEvaluation,
-            updatedAttemptCount = attempts.size
+            updatedAttemptCount = attempts.size,
+            poorQualityQuizCount = poorQualityQuizIdSet.size
         )
     }
 

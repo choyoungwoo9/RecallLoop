@@ -16,8 +16,13 @@ data class QuizAttemptHistory(
     val submittedAnswer: String,
     val elapsedSeconds: Int,
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     @ColumnDefault("'OK'")
     val selfEvaluation: SelfEvaluation = SelfEvaluation.OK,
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @ColumnDefault("'NONE'")
+    val problemFeedback: ProblemFeedback = ProblemFeedback.NONE,
     val attemptedAt: LocalDateTime,
     @CreationTimestamp
     val migratedAt: LocalDateTime = LocalDateTime.now()

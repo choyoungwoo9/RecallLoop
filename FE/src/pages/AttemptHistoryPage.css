@@ -187,6 +187,16 @@
   border-radius: 999px;
 }
 
+.cycle-item__problem-feedback,
+.quiz-row__problem-feedback {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #b54747;
+  background: #fff0f0;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+}
+
 .cycle-item__time {
   font-size: 0.75rem;
   color: #9aabb8;

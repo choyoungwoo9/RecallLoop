@@ -7,6 +7,7 @@ function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
   const [loading, setLoading] = useState(true)
   const [expandedIndex, setExpandedIndex] = useState(null)
   const [selectedEvaluation, setSelectedEvaluation] = useState(null)
+  const [poorQualityQuizIds, setPoorQualityQuizIds] = useState([])
   const [savingEvaluation, setSavingEvaluation] = useState(false)
   const [evaluationSaved, setEvaluationSaved] = useState(false)
   const [evaluationError, setEvaluationError] = useState(null)
@@ -32,6 +33,7 @@ function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
 
   useEffect(() => {
     setSelectedEvaluation(null)
+    setPoorQualityQuizIds([])
     setSavingEvaluation(false)
     setEvaluationSaved(false)
     setEvaluationError(null)
@@ -51,23 +53,46 @@ function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
     return labels[evaluation] || evaluation
   }
 
-  const handleEvaluationSelect = async (evaluation) => {
-    if (!studyLog?.id) return
-
+  const saveFeedback = async (evaluation, quizIds) => {
     setSavingEvaluation(true)
     setEvaluationError(null)
 
     try {
-      await saveCompletionSummaryEvaluation(studyLog.id, evaluation)
-      setSelectedEvaluation(evaluation)
+      await saveCompletionSummaryEvaluation(studyLog.id, {
+        selfEvaluation: evaluation,
+        poorQualityQuizIds: quizIds,
+      })
       setEvaluationSaved(true)
     } catch (error) {
-      console.error('완주 평가 저장 실패:', error)
-      setEvaluationError('평가 저장에 실패했습니다. 다시 시도해주세요.')
+      console.error('완주 피드백 저장 실패:', error)
+      setEvaluationError('피드백 저장에 실패했습니다. 다시 시도해주세요.')
       setEvaluationSaved(false)
     } finally {
       setSavingEvaluation(false)
     }
+  }
+
+  const handleEvaluationSelect = async (evaluation) => {
+    if (!studyLog?.id) return
+
+    setSelectedEvaluation(evaluation)
+    await saveFeedback(evaluation, poorQualityQuizIds)
+  }
+
+  const handlePoorQualityToggle = async (quizId) => {
+    const nextPoorQualityQuizIds = poorQualityQuizIds.includes(quizId)
+      ? poorQualityQuizIds.filter((id) => id !== quizId)
+      : [...poorQualityQuizIds, quizId]
+
+    setPoorQualityQuizIds(nextPoorQualityQuizIds)
+    setEvaluationError(null)
+
+    if (!selectedEvaluation) {
+      setEvaluationSaved(false)
+      return
+    }
+
+    await saveFeedback(selectedEvaluation, nextPoorQualityQuizIds)
   }
 
   if (loading) {
@@ -112,7 +137,10 @@ function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
             {quizzes.length > 0 ? (
               <div className="quiz-comparison">
                 <div className="summary-header">
-                  <span className="summary-label">풀이한 문제</span>
+                  <div className="summary-header__copy">
+                    <span className="summary-label">풀이한 문제</span>
+                    <span className="summary-note">별로였던 문제를 표시하면 이후 품질 개선에 반영됩니다.</span>
+                  </div>
                   <span className="summary-count">{quizzes.length}개</span>
                 </div>
 
@@ -128,6 +156,17 @@ function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
                       >
                         <div className="quiz-number">Q{index + 1}</div>
                         <div className="quiz-question">{quiz.question}</div>
+                        <button
+                          type="button"
+                          className={`quiz-item__feedback-button ${poorQualityQuizIds.includes(quiz.id) ? 'quiz-item__feedback-button--selected' : ''}`}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handlePoorQualityToggle(quiz.id)
+                          }}
+                          disabled={savingEvaluation}
+                        >
+                          별로에요
+                        </button>
                         <div className="expand-icon">
                           {expandedIndex === index ? '▼' : '▶'}
                         </div>
@@ -189,7 +228,7 @@ function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
             <div className="completion-evaluation__text">
               <span className="completion-evaluation__label">이번 기록 난이도</span>
               <span className="completion-evaluation__description">
-                완료 평가를 저장해야 계속 진행할 수 있습니다.
+                난이도 평가는 필수이고, 품질 평가는 선택입니다.
               </span>
             </div>
             <div className="completion-evaluation__buttons">

@@ -64,7 +64,8 @@ data class CompletionSummaryQuizItem(
 data class CompletionSummaryEvaluationResponse(
     val studyLogId: Long,
     val selfEvaluation: com.study.app.domain.quiz.SelfEvaluation,
-    val updatedAttemptCount: Int
+    val updatedAttemptCount: Int,
+    val poorQualityQuizCount: Int
 )
 
 data class CompletionSummaryResponse(

@@ -25,6 +25,14 @@ export function formatSelfEvaluation(evaluation) {
   return labels[evaluation] || '적당해요'
 }
 
+export function formatProblemFeedback(problemFeedback) {
+  if (problemFeedback === 'DISLIKED') {
+    return '별로에요'
+  }
+
+  return null
+}
+
 // 학습 기록 ID 기준 문제별 통계 집계
 export function buildQuizStats(items, studyLogId) {
   const filtered = studyLogId ? items.filter(i => i.studyLogId === studyLogId) : items
@@ -68,6 +76,9 @@ export function QuizRow({ quizStat }) {
         <div className="quiz-row__meta">
           <span className="quiz-row__difficulty">Lv.{latest?.difficulty ?? 5}</span>
           <span className="quiz-row__evaluation">{formatSelfEvaluation(latest?.selfEvaluation)}</span>
+          {formatProblemFeedback(latest?.problemFeedback) && (
+            <span className="quiz-row__problem-feedback">{formatProblemFeedback(latest?.problemFeedback)}</span>
+          )}
           <span className="quiz-row__meta-item">{quizStat.attemptCount}회 풀이</span>
           <span className="quiz-row__meta-item">평균 {formatAvgSeconds(quizStat.avgElapsedSeconds)}</span>
           <span className="quiz-row__meta-item">최근 {formatDateShort(quizStat.lastAttemptedAt)}</span>
@@ -144,6 +155,9 @@ function CycleAttemptItem({ item }) {
         <div className="cycle-item__meta">
           <span className="cycle-item__difficulty">Lv.{item.difficulty ?? 5}</span>
           <span className="cycle-item__evaluation">{formatSelfEvaluation(item.selfEvaluation)}</span>
+          {formatProblemFeedback(item.problemFeedback) && (
+            <span className="cycle-item__problem-feedback">{formatProblemFeedback(item.problemFeedback)}</span>
+          )}
           <span className="cycle-item__time">{item.elapsedSeconds}초</span>
           <span className={`cycle-item__arrow ${expanded ? 'cycle-item__arrow--up' : ''}`}>▼</span>
         </div>

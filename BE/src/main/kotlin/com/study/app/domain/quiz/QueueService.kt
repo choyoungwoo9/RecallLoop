@@ -157,6 +157,7 @@ class QueueService(
                     submittedAnswer = attempt.submittedAnswer,
                     elapsedSeconds = attempt.elapsedSeconds,
                     selfEvaluation = attempt.selfEvaluation,
+                    problemFeedback = attempt.problemFeedback,
                     attemptedAt = attempt.attemptedAt
                 )
             }
