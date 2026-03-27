@@ -48,10 +48,23 @@ class QueueController(
     fun initializeQueue(): ResponseEntity<QueueStatusResponse> {
         return ResponseEntity.ok(queueService.initializeQueue())
     }
+
+    @PatchMapping("/attempts/{id}/evaluate")
+    @Operation(summary = "문제 풀이 자가 평가 등록")
+    fun evaluateAttempt(
+        @PathVariable id: Long,
+        @RequestBody request: EvaluateAttemptRequest
+    ): ResponseEntity<Any> {
+        return ResponseEntity.ok(queueService.evaluateAttempt(id, request.selfEvaluation))
+    }
 }
 
 data class SubmitAnswerRequest(
     val quizId: Long,
     val submittedAnswer: String,
     val elapsedSeconds: Int
+)
+
+data class EvaluateAttemptRequest(
+    val selfEvaluation: SelfEvaluation
 )

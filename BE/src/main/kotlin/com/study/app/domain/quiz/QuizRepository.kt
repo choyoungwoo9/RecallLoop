@@ -16,4 +16,10 @@ interface QuizRepository : JpaRepository<Quiz, Long> {
     fun findByQueueOrder(queueOrder: Int): List<Quiz>
     @Query("SELECT q FROM Quiz q WHERE q.queueOrder > :queueOrder ORDER BY q.queueOrder ASC LIMIT 1")
     fun findNextByQueueOrder(queueOrder: Int): Quiz?
+    @Query("""
+        SELECT q FROM Quiz q
+        WHERE (q.originalQuizId = :originalQuizId OR q.id = :originalQuizId)
+        AND q.difficulty = :difficulty
+    """)
+    fun findByOriginalQuizIdAndDifficulty(originalQuizId: Long, difficulty: Int): Quiz?
 }

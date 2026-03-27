@@ -2,6 +2,7 @@ package com.study.app.domain.attempt
 
 import com.study.app.domain.quiz.QuizAttempt
 import com.study.app.domain.quiz.QuizAttemptHistory
+import com.study.app.domain.quiz.SelfEvaluation
 import java.time.LocalDateTime
 
 data class AttemptHistoryItem(
@@ -15,7 +16,9 @@ data class AttemptHistoryItem(
     val studyLogId: Long,
     val studyLogTitle: String,
     val isCurrent: Boolean,
-    val migratedAt: LocalDateTime?
+    val migratedAt: LocalDateTime?,
+    val selfEvaluation: SelfEvaluation,
+    val difficulty: Int
 ) {
     companion object {
         fun fromCurrent(attempt: QuizAttempt) = AttemptHistoryItem(
@@ -29,7 +32,9 @@ data class AttemptHistoryItem(
             studyLogId = attempt.quiz.studyLog.id!!,
             studyLogTitle = attempt.quiz.studyLog.title,
             isCurrent = true,
-            migratedAt = null
+            migratedAt = null,
+            selfEvaluation = attempt.selfEvaluation,
+            difficulty = attempt.quiz.difficulty
         )
 
         fun fromHistory(history: QuizAttemptHistory) = AttemptHistoryItem(
@@ -43,7 +48,9 @@ data class AttemptHistoryItem(
             studyLogId = history.quiz.studyLog.id!!,
             studyLogTitle = history.quiz.studyLog.title,
             isCurrent = false,
-            migratedAt = history.migratedAt
+            migratedAt = history.migratedAt,
+            selfEvaluation = history.selfEvaluation,
+            difficulty = history.quiz.difficulty
         )
     }
 }

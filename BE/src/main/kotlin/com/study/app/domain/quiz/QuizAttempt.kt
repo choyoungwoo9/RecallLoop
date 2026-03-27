@@ -2,6 +2,7 @@ package com.study.app.domain.quiz
 
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.ColumnDefault
 import java.time.LocalDateTime
 
 @Entity
@@ -14,6 +15,9 @@ data class QuizAttempt(
     val quiz: Quiz,
     val submittedAnswer: String,
     val elapsedSeconds: Int,
+    @Enumerated(EnumType.STRING)
+    @ColumnDefault("'OK'")
+    var selfEvaluation: SelfEvaluation = SelfEvaluation.OK,
     @CreationTimestamp
     val attemptedAt: LocalDateTime = LocalDateTime.now()
 )

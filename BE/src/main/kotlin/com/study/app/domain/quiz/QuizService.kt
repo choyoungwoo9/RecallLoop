@@ -32,7 +32,7 @@ class QuizService(
         )
 
         // Save quizzes (queueOrder는 재정렬 후 할당)
-        val savedQuizzes = generatedQuizzes.map { generatedQuiz ->
+        generatedQuizzes.forEach { generatedQuiz ->
             val quiz = Quiz(
                 quizConfig = quizConfig,
                 studyLog = studyLog,
@@ -46,7 +46,9 @@ class QuizService(
         // 전체 queueOrder를 1부터 새로 정렬
         reorderAllQuizzes()
 
-        return savedQuizzes.map { QuizResponse.from(it) }
+        // 재정렬 후 최신 데이터 조회
+        val updatedQuizzes = quizRepository.findByQuizConfigIdOrderByQueueOrder(configId)
+        return updatedQuizzes.map { QuizResponse.from(it) }
     }
 
     @Transactional(readOnly = true)
@@ -124,5 +126,97 @@ class QuizService(
         val attempts = quizAttemptRepository.findCurrentByStudyLogId(studyLogId)
 
         return com.study.app.domain.quiz.dto.CompletionSummaryResponse.from(studyLog, quizzes, attempts)
+    }
+
+    /**
+     * 특정 난이도의 변형 문제를 찾거나 생성
+     * 1. DB에서 같은 originalQuiz의 해당 난이도 변형을 탐색
+     * 2. 없으면 Gemini로 생성
+     * 3. 저장 후 반환
+     */
+    fun findOrCreateVariant(quiz: Quiz, targetDifficulty: Int): Quiz {
+        val clampedDifficulty = targetDifficulty.coerceIn(1, 10)
+        val originalId = quiz.originalQuizId ?: quiz.id!!
+
+        // 1. DB에서 탐색
+        val existing = quizRepository.findByOriginalQuizIdAndDifficulty(originalId, clampedDifficulty)
+        if (existing != null) {
+            return existing
+        }
+
+        // 2. Gemini로 생성
+        val generated = try {
+            geminiClient.generateVariantQuiz(
+                question = quiz.question,
+                studyContent = quiz.studyLog.content,
+                difficulty = clampedDifficulty
+            )
+        } catch (e: Exception) {
+            println("Failed to generate variant quiz: ${e.message}")
+            // Gemini 오류 시 해당 quiz는 교체하지 않고 원본 유지
+            return quiz
+        }
+
+        // 3. 저장
+        val variantQuiz = Quiz(
+            quizConfig = quiz.quizConfig,
+            studyLog = quiz.studyLog,
+            question = generated.question,
+            answer = generated.answer,
+            queueOrder = 0,  // 임시값, 나중에 재정렬
+            difficulty = clampedDifficulty,
+            originalQuizId = originalId
+        )
+        return quizRepository.save(variantQuiz)
+    }
+
+    /**
+     * 큐에서 original quiz를 variant quiz로 교체
+     * - variant의 queueOrder을 original의 queueOrder로 설정
+     * - original의 queueOrder을 0으로 설정 (큐에서 제외)
+     */
+    fun replaceInQueue(original: Quiz, variant: Quiz) {
+        if (original.id == variant.id) {
+            // 같은 문제면 교체 불필요
+            return
+        }
+
+        // variant를 original의 자리에 배치
+        val variantWithOrder = variant.copy(queueOrder = original.queueOrder)
+        quizRepository.save(variantWithOrder)
+
+        // original을 큐에서 제외
+        val originalExcluded = original.copy(queueOrder = 0)
+        quizRepository.save(originalExcluded)
+    }
+
+    /**
+     * 적응형 난이도 처리
+     * 이관된 attempt들의 selfEvaluation에 따라 다음 사이클 문제를 교체
+     */
+    fun processAdaptiveDifficulty(attempts: List<QuizAttempt>) {
+        var changed = false
+
+        for (attempt in attempts) {
+            val quiz = attempt.quiz
+            val targetDifficulty = when (attempt.selfEvaluation) {
+                SelfEvaluation.TOO_EASY -> minOf(quiz.difficulty + 1, 10)
+                SelfEvaluation.TOO_HARD -> maxOf(quiz.difficulty - 1, 1)
+                SelfEvaluation.OK -> quiz.difficulty  // 변경 없음
+            }
+
+            if (targetDifficulty != quiz.difficulty) {
+                // 새로운 난이도의 변형 문제 찾기/생성
+                val variant = findOrCreateVariant(quiz, targetDifficulty)
+                // 큐에서 교체
+                replaceInQueue(quiz, variant)
+                changed = true
+            }
+        }
+
+        // 변경이 있으면 전체 queueOrder 재정렬
+        if (changed) {
+            reorderAllQuizzes()
+        }
     }
 }

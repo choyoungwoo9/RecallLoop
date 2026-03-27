@@ -4,6 +4,7 @@ import com.study.app.domain.quiz.dto.*
 import com.study.app.domain.studylog.StudyLogRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDateTime
 
 @Service
@@ -15,6 +16,8 @@ class QueueService(
     private val quizAttemptHistoryRepository: QuizAttemptHistoryRepository,
     private val studyLogRepository: StudyLogRepository
 ) {
+    @Autowired(required = false)
+    private var quizService: QuizService? = null
     fun getCurrentQuiz(): CurrentQuizResponse? {
         val queueState = queueStateRepository.findById(1L).orElse(null) ?: return null
         val currentQuiz = queueState.currentQuiz ?: return null
@@ -143,25 +146,30 @@ class QueueService(
     /**
      * 사이클 완료 후 이전 사이클의 모든 attempt를 history로 이관
      * - 현재 QuizAttempt에서 모든 레코드 조회
-     * - QuizAttemptHistory로 이관
+     * - selfEvaluation 포함하여 QuizAttemptHistory로 이관
+     * - 적응형 난이도 처리
      * - QuizAttempt 비우기
      */
-    private fun migratePreviousCycleAttempts() {
+    fun migratePreviousCycleAttempts() {
         // 현재 QuizAttempt 전체 조회
         val currentAttempts = quizAttemptRepository.findAll()
 
         if (currentAttempts.isNotEmpty()) {
-            // QuizAttemptHistory로 변환 후 저장
+            // QuizAttemptHistory로 변환 후 저장 (selfEvaluation 포함)
             val historyRecords = currentAttempts.map { attempt ->
                 QuizAttemptHistory(
                     quiz = attempt.quiz,
                     submittedAnswer = attempt.submittedAnswer,
                     elapsedSeconds = attempt.elapsedSeconds,
+                    selfEvaluation = attempt.selfEvaluation,
                     attemptedAt = attempt.attemptedAt
                 )
             }
 
             quizAttemptHistoryRepository.saveAll(historyRecords)
+
+            // 적응형 난이도 처리
+            quizService?.processAdaptiveDifficulty(currentAttempts)
 
             // 현재 QuizAttempt 전부 삭제
             quizAttemptRepository.deleteAll()
@@ -201,5 +209,19 @@ class QueueService(
         quizAttemptRepository.deleteAll()
 
         return getQueueStatus()
+    }
+
+    fun evaluateAttempt(attemptId: Long, selfEvaluation: SelfEvaluation): Map<String, Any?> {
+        val attempt = quizAttemptRepository.findById(attemptId)
+            .orElseThrow { IllegalArgumentException("Attempt not found") }
+
+        // 자가 평가 업데이트
+        attempt.selfEvaluation = selfEvaluation
+        val updatedAttempt = quizAttemptRepository.save(attempt)
+
+        return mapOf<String, Any?>(
+            "id" to updatedAttempt.id,
+            "selfEvaluation" to updatedAttempt.selfEvaluation
+        )
     }
 }
