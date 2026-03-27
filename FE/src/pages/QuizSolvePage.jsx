@@ -12,6 +12,11 @@ import useTimerStore from '../store/timerStore'
 import './QuizSolvePage.css'
 
 function QuizSolvePage() {
+  const adaptiveMessages = [
+    '이전 사이클 응답을 분석하고 있습니다',
+    '난이도에 맞는 문제를 다시 배치하고 있습니다',
+    '다음 사이클 문제 세트를 준비하고 있습니다',
+  ]
   const [currentQuiz, setCurrentQuiz] = useState(null)
   const [submittedAnswer, setSubmittedAnswer] = useState('')
   const [loading, setLoading] = useState(true)
@@ -22,6 +27,8 @@ function QuizSolvePage() {
   const [pendingCycleComplete, setPendingCycleComplete] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', type: '' })
+  const [isAdaptiveRefreshing, setIsAdaptiveRefreshing] = useState(false)
+  const [adaptiveMessageIndex, setAdaptiveMessageIndex] = useState(0)
   const startTimer = useTimerStore((state) => state.startTimer)
   const stopTimer = useTimerStore((state) => state.stopTimer)
   const navigate = useNavigate()
@@ -44,9 +51,31 @@ function QuizSolvePage() {
     return () => clearInterval(interval)
   }, [])
 
-  const loadCurrentQuiz = async () => {
+  useEffect(() => {
+    if (!isAdaptiveRefreshing) {
+      setAdaptiveMessageIndex(0)
+      return
+    }
+
+    const interval = setInterval(() => {
+      setAdaptiveMessageIndex((prev) => (prev + 1) % adaptiveMessages.length)
+    }, 900)
+
+    return () => clearInterval(interval)
+  }, [adaptiveMessages.length, isAdaptiveRefreshing])
+
+  const loadCurrentQuiz = async ({ showAdaptiveRefresh = false } = {}) => {
+    const refreshStart = Date.now()
+
     try {
-      setLoading(true)
+      if (showAdaptiveRefresh) {
+        setAdaptiveMessageIndex(0)
+        setIsAdaptiveRefreshing(true)
+        await new Promise((resolve) => setTimeout(resolve, 250))
+      } else {
+        setLoading(true)
+      }
+
       const quiz = await getCurrentQuiz()
       if (quiz && quiz.id) {
         setCurrentQuiz(quiz)
@@ -59,7 +88,16 @@ function QuizSolvePage() {
       console.error('문제 로드 실패:', error)
       setCurrentQuiz(null)
     } finally {
-      setLoading(false)
+      if (showAdaptiveRefresh) {
+        const elapsed = Date.now() - refreshStart
+        const remaining = Math.max(0, 1400 - elapsed)
+        if (remaining > 0) {
+          await new Promise((resolve) => setTimeout(resolve, remaining))
+        }
+        setIsAdaptiveRefreshing(false)
+      } else {
+        setLoading(false)
+      }
     }
   }
 
@@ -90,14 +128,14 @@ function QuizSolvePage() {
         setSubmitting(false)
       } else if (result.isCycleComplete) {
         setIsCycleComplete(true)
-        setTimeout(() => {
+        setTimeout(async () => {
           setIsCycleComplete(false)
-          loadCurrentQuiz()
+          await loadCurrentQuiz({ showAdaptiveRefresh: true })
           setSubmitting(false)
         }, 2000)
       } else {
         await new Promise((resolve) => setTimeout(resolve, 500))
-        loadCurrentQuiz()
+        await loadCurrentQuiz()
         setSubmitting(false)
       }
     } catch (error) {
@@ -120,9 +158,9 @@ function QuizSolvePage() {
         // 사이클 완료 배너를 보여줌
         setIsCycleComplete(true)
         setPendingCycleComplete(false)
-        setTimeout(() => {
+        setTimeout(async () => {
           setIsCycleComplete(false)
-          loadCurrentQuiz()
+          await loadCurrentQuiz({ showAdaptiveRefresh: true })
         }, 2000)
       } else {
         loadCurrentQuiz()
@@ -179,6 +217,36 @@ function QuizSolvePage() {
   return (
     <Layout>
       <div className="quiz-solve">
+        {isAdaptiveRefreshing && (
+          <div className="quiz-solve__adaptive-refresh">
+            <div className="quiz-solve__adaptive-backdrop" />
+            <div className="quiz-solve__adaptive-panel">
+              <div className="quiz-solve__adaptive-orbits">
+                <div className="quiz-solve__adaptive-core" />
+                <div className="quiz-solve__adaptive-ring quiz-solve__adaptive-ring--outer" />
+                <div className="quiz-solve__adaptive-ring quiz-solve__adaptive-ring--middle" />
+                <div className="quiz-solve__adaptive-ring quiz-solve__adaptive-ring--inner" />
+                <span className="quiz-solve__adaptive-pulse quiz-solve__adaptive-pulse--one" />
+                <span className="quiz-solve__adaptive-pulse quiz-solve__adaptive-pulse--two" />
+                <span className="quiz-solve__adaptive-pulse quiz-solve__adaptive-pulse--three" />
+              </div>
+
+              <div className="quiz-solve__adaptive-copy">
+                <span className="quiz-solve__adaptive-kicker">Adaptive Recall Engine</span>
+                <h2 className="quiz-solve__adaptive-title">AI가 다음 사이클 문제를 업데이트 중입니다</h2>
+                <p className="quiz-solve__adaptive-message">
+                  {adaptiveMessages[adaptiveMessageIndex]}
+                </p>
+                <div className="quiz-solve__adaptive-progress">
+                  <span className="quiz-solve__adaptive-dot" />
+                  <span className="quiz-solve__adaptive-dot" />
+                  <span className="quiz-solve__adaptive-dot" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <QueueProgressBar />
 
         {isCycleComplete && (
