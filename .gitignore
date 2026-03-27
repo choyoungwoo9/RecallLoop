@@ -1,6 +1,7 @@
 # BE
 BE/build/
 BE/.gradle/
+BE/bin/
 BE/data/*.db
 BE/data/*.db-shm
 BE/data/*.db-wal
