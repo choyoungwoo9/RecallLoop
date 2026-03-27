@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentQuiz, submitAnswer } from '../api/queue'
 import CompletionQuizzesModal from '../components/queue/CompletionQuizzesModal'
+import CycleCompleteOverlay from '../components/queue/CycleCompleteOverlay'
 import QueueProgressBar from '../components/queue/QueueProgressBar'
 import Layout from '../components/common/Layout'
 import Button from '../components/common/Button'
@@ -22,9 +23,9 @@ function QuizSolvePage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [completedStudyLog, setCompletedStudyLog] = useState(null)
-  const [isCycleComplete, setIsCycleComplete] = useState(false)
   const [showQuizzesModal, setShowQuizzesModal] = useState(false)
   const [pendingCycleComplete, setPendingCycleComplete] = useState(false)
+  const [showCycleCompleteOverlay, setShowCycleCompleteOverlay] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', type: '' })
   const [isAdaptiveRefreshing, setIsAdaptiveRefreshing] = useState(false)
@@ -127,12 +128,7 @@ function QuizSolvePage() {
         setPendingCycleComplete(result.isCycleComplete)
         setSubmitting(false)
       } else if (result.isCycleComplete) {
-        setIsCycleComplete(true)
-        setTimeout(async () => {
-          setIsCycleComplete(false)
-          await loadCurrentQuiz({ showAdaptiveRefresh: true })
-          setSubmitting(false)
-        }, 2000)
+        setShowCycleCompleteOverlay(true)
       } else {
         await new Promise((resolve) => setTimeout(resolve, 500))
         await loadCurrentQuiz()
@@ -152,20 +148,20 @@ function QuizSolvePage() {
 
   const handleQuizzesModalAction = (action) => {
     if (action === 'continue') {
-      // "계속 풀기" 선택
       setShowQuizzesModal(false)
       if (pendingCycleComplete) {
-        // 사이클 완료 배너를 보여줌
-        setIsCycleComplete(true)
         setPendingCycleComplete(false)
-        setTimeout(async () => {
-          setIsCycleComplete(false)
-          await loadCurrentQuiz({ showAdaptiveRefresh: true })
-        }, 2000)
+        setShowCycleCompleteOverlay(true)
       } else {
         loadCurrentQuiz()
       }
     }
+  }
+
+  const handleCycleCompleteOverlayFinished = async () => {
+    setShowCycleCompleteOverlay(false)
+    await loadCurrentQuiz({ showAdaptiveRefresh: true })
+    setSubmitting(false)
   }
 
   const handleConfirmModalConfirm = () => {
@@ -217,6 +213,11 @@ function QuizSolvePage() {
   return (
     <Layout>
       <div className="quiz-solve">
+        <CycleCompleteOverlay
+          open={showCycleCompleteOverlay}
+          onFinished={handleCycleCompleteOverlayFinished}
+        />
+
         {isAdaptiveRefreshing && (
           <div className="quiz-solve__adaptive-refresh">
             <div className="quiz-solve__adaptive-backdrop" />
@@ -248,15 +249,6 @@ function QuizSolvePage() {
         )}
 
         <QueueProgressBar />
-
-        {isCycleComplete && (
-          <div className="quiz-solve__cycle-complete">
-            <div className="quiz-solve__cycle-complete-content">
-              <h2>한 바퀴 완료!</h2>
-              <p>다시 처음부터 시작합니다</p>
-            </div>
-          </div>
-        )}
 
         <div className="quiz-solve__container">
           <div className="quiz-solve__header">
