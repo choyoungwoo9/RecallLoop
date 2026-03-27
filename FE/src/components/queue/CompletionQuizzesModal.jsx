@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react'
-import { getCompletionSummary } from '../../api/completionSummary'
+import { getCompletionSummary, saveCompletionSummaryEvaluation } from '../../api/completionSummary'
 import './CompletionQuizzesModal.css'
 
 function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [expandedIndex, setExpandedIndex] = useState(null)
+  const [selectedEvaluation, setSelectedEvaluation] = useState(null)
+  const [savingEvaluation, setSavingEvaluation] = useState(false)
+  const [evaluationSaved, setEvaluationSaved] = useState(false)
+  const [evaluationError, setEvaluationError] = useState(null)
 
   useEffect(() => {
     const loadSummary = async () => {
@@ -26,17 +30,44 @@ function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
     }
   }, [studyLog])
 
+  useEffect(() => {
+    setSelectedEvaluation(null)
+    setSavingEvaluation(false)
+    setEvaluationSaved(false)
+    setEvaluationError(null)
+    setExpandedIndex(null)
+  }, [studyLog?.id])
+
   const toggleQuiz = (index) => {
     setExpandedIndex(expandedIndex === index ? null : index)
   }
 
   const getEvaluationLabel = (evaluation) => {
     const labels = {
-      TOO_HARD: '어려웠음',
-      OK: '적당했음',
-      TOO_EASY: '쉬웠음'
+      TOO_HARD: '어려워요',
+      OK: '적당해요',
+      TOO_EASY: '쉬워요'
     }
     return labels[evaluation] || evaluation
+  }
+
+  const handleEvaluationSelect = async (evaluation) => {
+    if (!studyLog?.id) return
+
+    setSavingEvaluation(true)
+    setEvaluationError(null)
+
+    try {
+      await saveCompletionSummaryEvaluation(studyLog.id, evaluation)
+      setSelectedEvaluation(evaluation)
+      setEvaluationSaved(true)
+    } catch (error) {
+      console.error('완주 평가 저장 실패:', error)
+      setEvaluationError('평가 저장에 실패했습니다. 다시 시도해주세요.')
+      setEvaluationSaved(false)
+    } finally {
+      setSavingEvaluation(false)
+    }
   }
 
   if (loading) {
@@ -97,11 +128,6 @@ function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
                       >
                         <div className="quiz-number">Q{index + 1}</div>
                         <div className="quiz-question">{quiz.question}</div>
-                        {quiz.selfEvaluation && (
-                          <div className={`quiz-evaluation-badge evaluation-${quiz.selfEvaluation.toLowerCase()}`}>
-                            {getEvaluationLabel(quiz.selfEvaluation)}
-                          </div>
-                        )}
                         <div className="expand-icon">
                           {expandedIndex === index ? '▼' : '▶'}
                         </div>
@@ -159,9 +185,34 @@ function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
         </div>
 
         <div className="modal-footer">
+          <div className="completion-evaluation">
+            <div className="completion-evaluation__text">
+              <span className="completion-evaluation__label">이번 기록 난이도</span>
+              <span className="completion-evaluation__description">
+                완료 평가를 저장해야 계속 진행할 수 있습니다.
+              </span>
+            </div>
+            <div className="completion-evaluation__buttons">
+              {['TOO_HARD', 'OK', 'TOO_EASY'].map((evaluation) => (
+                <button
+                  key={evaluation}
+                  type="button"
+                  className={`completion-evaluation__button ${selectedEvaluation === evaluation ? 'completion-evaluation__button--selected' : ''}`}
+                  onClick={() => handleEvaluationSelect(evaluation)}
+                  disabled={savingEvaluation}
+                >
+                  {getEvaluationLabel(evaluation)}
+                </button>
+              ))}
+            </div>
+            {evaluationError && (
+              <div className="completion-evaluation__error">{evaluationError}</div>
+            )}
+          </div>
           <button
             onClick={() => onAction('continue')}
             className="btn btn-primary"
+            disabled={!evaluationSaved || savingEvaluation}
           >
             계속 풀기
           </button>

@@ -24,6 +24,8 @@ data class Quiz(
     val difficulty: Int = 5,  // 1~10, default 5 (표준)
     @Column(name = "original_quiz_id", nullable = true)
     val originalQuizId: Long? = null,  // null=원본, non-null=난이도 변형
+    @ColumnDefault("true")
+    val isActiveInQueue: Boolean = true,
     @CreationTimestamp
     val createdAt: LocalDateTime = LocalDateTime.now()
 )

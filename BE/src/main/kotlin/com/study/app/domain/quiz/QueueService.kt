@@ -18,7 +18,9 @@ class QueueService(
 ) {
     @Autowired(required = false)
     private var quizService: QuizService? = null
+
     fun getCurrentQuiz(): CurrentQuizResponse? {
+        prepareNextCycleIfNeeded()
         val queueState = queueStateRepository.findById(1L).orElse(null) ?: return null
         val currentQuiz = queueState.currentQuiz ?: return null
         return CurrentQuizResponse(
@@ -26,7 +28,8 @@ class QueueService(
             question = currentQuiz.question,
             studyLogId = currentQuiz.studyLog.id!!,
             studyLogTitle = currentQuiz.studyLog.title,
-            queueOrder = currentQuiz.queueOrder
+            queueOrder = currentQuiz.queueOrder,
+            difficulty = currentQuiz.difficulty
         )
     }
 
@@ -58,15 +61,7 @@ class QueueService(
         submittedAnswer: String,
         elapsedSeconds: Int
     ): QueueSubmitResponse {
-        // ===== 신규: 사이클 완료 후 이전 사이클 attempt를 history로 이관 =====
-        val queueState = queueStateRepository.findById(1L).orElse(null)
-            ?: QueueState(id = 1L).let { queueStateRepository.save(it) }
-
-        if (queueState.cycleJustCompleted) {
-            migratePreviousCycleAttempts()
-            queueStateRepository.clearCycleJustCompletedFlag()
-        }
-        // =========================================================
+        prepareNextCycleIfNeeded()
 
         val quiz = quizRepository.findById(quizId)
             .orElseThrow { IllegalArgumentException("Quiz not found") }
@@ -92,12 +87,12 @@ class QueueService(
 
         // 4. 다음 문제 계산 (메모리에서만)
         val nextQueueOrder = (quiz.queueOrder % updatedQueueState.totalCount) + 1
-        val nextQuiz = quizRepository.findByQueueOrder(nextQueueOrder).firstOrNull()
+        val nextQuiz = quizRepository.findActiveByQueueOrder(nextQueueOrder).firstOrNull()
 
         // 5. 완주 감지: 현재 studyLog의 모든 문제가 현재 사이클에서 완료되었는지 확인
         //    ⭐ 타임스탐프 비교 제거! 현재 QuizAttempt 테이블에만 있으면 현재 사이클
         val currentStudyLogId = quiz.studyLog.id!!
-        val quizzesInCurrentStudyLog = quizRepository.findByStudyLogId(currentStudyLogId)
+        val quizzesInCurrentStudyLog = quizRepository.findByStudyLogIdAndIsActiveInQueueTrue(currentStudyLogId)
 
         val completedStudyLog = if (quizzesInCurrentStudyLog.isEmpty()) {
             null
@@ -178,7 +173,7 @@ class QueueService(
 
     fun initializeQueue(): QueueStatusResponse {
         // 모든 문제 조회
-        val allQuizzes = quizRepository.findAll()
+        val allQuizzes = quizRepository.findAllByIsActiveInQueueTrueOrderByQueueOrder()
         val totalCount = allQuizzes.size
 
         // QueueState 초기화
@@ -211,17 +206,12 @@ class QueueService(
         return getQueueStatus()
     }
 
-    fun evaluateAttempt(attemptId: Long, selfEvaluation: SelfEvaluation): Map<String, Any?> {
-        val attempt = quizAttemptRepository.findById(attemptId)
-            .orElseThrow { IllegalArgumentException("Attempt not found") }
+    private fun prepareNextCycleIfNeeded() {
+        val queueState = queueStateRepository.findById(1L).orElse(null) ?: return
 
-        // 자가 평가 업데이트
-        attempt.selfEvaluation = selfEvaluation
-        val updatedAttempt = quizAttemptRepository.save(attempt)
-
-        return mapOf<String, Any?>(
-            "id" to updatedAttempt.id,
-            "selfEvaluation" to updatedAttempt.selfEvaluation
-        )
+        if (queueState.cycleJustCompleted) {
+            migratePreviousCycleAttempts()
+            queueStateRepository.clearCycleJustCompletedFlag()
+        }
     }
 }

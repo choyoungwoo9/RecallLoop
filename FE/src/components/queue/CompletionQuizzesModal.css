@@ -248,31 +248,6 @@
   word-break: break-word;
 }
 
-.quiz-evaluation-badge {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-  color: white;
-}
-
-.quiz-evaluation-badge.evaluation-too_hard {
-  background-color: #FF6B6B;
-}
-
-.quiz-evaluation-badge.evaluation-ok {
-  background-color: #888888;
-}
-
-.quiz-evaluation-badge.evaluation-too_easy {
-  background-color: #00BFA5;
-}
-
 .expand-icon {
   flex-shrink: 0;
   color: #999;
@@ -369,7 +344,73 @@
   border-top: 1px solid #e0e0e0;
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.completion-evaluation {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.completion-evaluation__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.completion-evaluation__label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2f53;
+}
+
+.completion-evaluation__description {
+  font-size: 13px;
+  color: #6b7a99;
+}
+
+.completion-evaluation__buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.completion-evaluation__button {
+  border: 1px solid #d7deeb;
+  background: #f7f9fc;
+  color: #38507a;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.completion-evaluation__button:hover:not(:disabled) {
+  border-color: #0052cc;
+  color: #0052cc;
+  background: #eef4ff;
+}
+
+.completion-evaluation__button--selected {
+  border-color: #0052cc;
+  color: white;
+  background: #0052cc;
+  box-shadow: 0 6px 14px rgba(0, 82, 204, 0.2);
+}
+
+.completion-evaluation__button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.completion-evaluation__error {
+  font-size: 13px;
+  color: #d64545;
 }
 
 .btn {
@@ -410,6 +451,13 @@
   transform: translateY(0);
 }
 
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 /* 반응형 */
 @media (max-width: 900px) {
   .modal-panels {
@@ -448,7 +496,8 @@
 
   .modal-footer {
     padding: 15px 20px;
-    flex-direction: column-reverse;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .btn {
@@ -475,9 +524,5 @@
 
   .study-title {
     font-size: 20px;
-  }
-
-  .quiz-evaluation-badge {
-    margin-top: 8px;
   }
 }

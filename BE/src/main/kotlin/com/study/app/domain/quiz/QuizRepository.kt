@@ -7,6 +7,11 @@ interface QuizRepository : JpaRepository<Quiz, Long> {
     fun findByStudyLogIdOrderByQueueOrder(studyLogId: Long): List<Quiz>
     fun findByStudyLogId(studyLogId: Long): List<Quiz>
     fun findByQuizConfigIdOrderByQueueOrder(quizConfigId: Long): List<Quiz>
+    fun findByStudyLogIdAndIsActiveInQueueTrueOrderByQueueOrder(studyLogId: Long): List<Quiz>
+    fun findByStudyLogIdAndIsActiveInQueueTrue(studyLogId: Long): List<Quiz>
+    fun findByQuizConfigIdAndIsActiveInQueueTrueOrderByQueueOrder(quizConfigId: Long): List<Quiz>
+    fun findAllByIsActiveInQueueTrueOrderByQueueOrder(): List<Quiz>
+    fun countByStudyLogIdAndIsActiveInQueueTrue(studyLogId: Long): Int
     fun findByStudyLogIdOrderByQueueOrderDesc(studyLogId: Long): List<Quiz>
     @Query("SELECT MAX(q.queueOrder) FROM Quiz q WHERE q.studyLog.id = :studyLogId")
     fun findMaxQueueOrderByStudyLogId(studyLogId: Long): Int?
@@ -14,6 +19,8 @@ interface QuizRepository : JpaRepository<Quiz, Long> {
     fun findAllOrderByQueueOrder(): List<Quiz>
     @Query("SELECT q FROM Quiz q WHERE q.queueOrder = :queueOrder ORDER BY q.queueOrder ASC")
     fun findByQueueOrder(queueOrder: Int): List<Quiz>
+    @Query("SELECT q FROM Quiz q WHERE q.isActiveInQueue = true AND q.queueOrder = :queueOrder ORDER BY q.queueOrder ASC")
+    fun findActiveByQueueOrder(queueOrder: Int): List<Quiz>
     @Query("SELECT q FROM Quiz q WHERE q.queueOrder > :queueOrder ORDER BY q.queueOrder ASC LIMIT 1")
     fun findNextByQueueOrder(queueOrder: Int): Quiz?
     @Query("""

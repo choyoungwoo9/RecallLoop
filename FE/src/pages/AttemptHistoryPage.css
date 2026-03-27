@@ -163,6 +163,28 @@
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.cycle-item__difficulty,
+.quiz-row__difficulty {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0052cc;
+  background: #eef4ff;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+}
+
+.cycle-item__evaluation,
+.quiz-row__evaluation {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #007a63;
+  background: #e8f7f4;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
 }
 
 .cycle-item__time {

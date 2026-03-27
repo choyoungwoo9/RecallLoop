@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDateTime
 
 /**
@@ -38,6 +39,25 @@ class GlobalExceptionHandler {
             path = request.requestURI
         )
         return ResponseEntity(errorResponse, HttpStatus.BAD_REQUEST)
+    }
+
+    /**
+     * ResponseStatusException (서비스 계층에서 명시적으로 내려준 상태 코드 유지)
+     */
+    @ExceptionHandler(ResponseStatusException::class)
+    fun handleResponseStatusException(
+        ex: ResponseStatusException,
+        request: jakarta.servlet.http.HttpServletRequest
+    ): ResponseEntity<ErrorResponse> {
+        val statusCode = ex.statusCode.value()
+        val errorResponse = ErrorResponse(
+            timestamp = LocalDateTime.now(),
+            status = statusCode,
+            error = ex.statusCode.toString(),
+            message = ex.reason ?: ex.message ?: "Request failed",
+            path = request.requestURI
+        )
+        return ResponseEntity(errorResponse, ex.statusCode)
     }
 
     /**

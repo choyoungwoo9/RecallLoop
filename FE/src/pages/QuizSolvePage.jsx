@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentQuiz, submitAnswer } from '../api/queue'
-import AnswerRevealPanel from '../components/queue/AnswerRevealPanel'
 import CompletionQuizzesModal from '../components/queue/CompletionQuizzesModal'
 import QueueProgressBar from '../components/queue/QueueProgressBar'
 import Layout from '../components/common/Layout'
@@ -23,11 +22,6 @@ function QuizSolvePage() {
   const [pendingCycleComplete, setPendingCycleComplete] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', type: '' })
-  const [showAnswerReveal, setShowAnswerReveal] = useState(false)
-  const [lastSubmittedAnswer, setLastSubmittedAnswer] = useState('')
-  const [lastAttemptId, setLastAttemptId] = useState(null)
-  const [pendingResult, setPendingResult] = useState(null)
-  const timerInterval = useTimerStore((state) => state.timerInterval)
   const startTimer = useTimerStore((state) => state.startTimer)
   const stopTimer = useTimerStore((state) => state.stopTimer)
   const navigate = useNavigate()
@@ -89,12 +83,23 @@ function QuizSolvePage() {
         elapsedSeconds: elapsedSeconds
       })
 
-      // 제출 후 AnswerRevealPanel 표시 (자가 평가 대기)
-      setLastSubmittedAnswer(submittedAnswer)
-      setLastAttemptId(result.attempt.id)
-      setPendingResult(result)
-      setShowAnswerReveal(true)
-      setSubmitting(false)
+      if (result.completedStudyLog) {
+        setCompletedStudyLog(result.completedStudyLog)
+        setShowQuizzesModal(true)
+        setPendingCycleComplete(result.isCycleComplete)
+        setSubmitting(false)
+      } else if (result.isCycleComplete) {
+        setIsCycleComplete(true)
+        setTimeout(() => {
+          setIsCycleComplete(false)
+          loadCurrentQuiz()
+          setSubmitting(false)
+        }, 2000)
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        loadCurrentQuiz()
+        setSubmitting(false)
+      }
     } catch (error) {
       console.error('답 제출 실패:', error)
       setConfirmModal({
@@ -104,32 +109,6 @@ function QuizSolvePage() {
         type: 'error'
       })
       setSubmitting(false)
-    }
-  }
-
-  const handleEvaluate = async (evaluation) => {
-    // 자가 평가 완료 후 기존 로직 실행
-    setShowAnswerReveal(false)
-    setLastSubmittedAnswer('')
-    setLastAttemptId(null)
-
-    const result = pendingResult
-    setPendingResult(null)
-
-    // 제출 결과 처리 (기존 handleSubmit의 후처리 로직)
-    if (result.completedStudyLog) {
-      setCompletedStudyLog(result.completedStudyLog)
-      setShowQuizzesModal(true)
-      setPendingCycleComplete(result.isCycleComplete)
-    } else if (result.isCycleComplete) {
-      setIsCycleComplete(true)
-      setTimeout(() => {
-        setIsCycleComplete(false)
-        loadCurrentQuiz()
-      }, 2000)
-    } else {
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      loadCurrentQuiz()
     }
   }
 
@@ -232,36 +211,28 @@ function QuizSolvePage() {
             </div>
           </div>
 
-          {showAnswerReveal ? (
-            <AnswerRevealPanel
-              submittedAnswer={lastSubmittedAnswer}
-              attemptId={lastAttemptId}
-              onEvaluate={handleEvaluate}
+          <form onSubmit={handleSubmit} className="quiz-solve__form">
+            <Textarea
+              label="답변"
+              value={submittedAnswer}
+              onChange={(e) => setSubmittedAnswer(e.target.value)}
+              placeholder="여기에 답변을 입력하세요"
+              rows={8}
+              size="lg"
+              required
             />
-          ) : (
-            <form onSubmit={handleSubmit} className="quiz-solve__form">
-              <Textarea
-                label="답변"
-                value={submittedAnswer}
-                onChange={(e) => setSubmittedAnswer(e.target.value)}
-                placeholder="여기에 답변을 입력하세요"
-                rows={8}
-                size="lg"
-                required
-              />
 
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="quiz-solve__submit-btn"
-                loading={submitting}
-                disabled={submitting}
-              >
-                ✅ 제출하기
-              </Button>
-            </form>
-          )}
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="quiz-solve__submit-btn"
+              loading={submitting}
+              disabled={submitting}
+            >
+              ✅ 제출하기
+            </Button>
+          </form>
         </div>
 
         {showQuizzesModal && completedStudyLog && (

@@ -26,7 +26,7 @@ class StudyLogService(
     @Transactional(readOnly = true)
     fun findAll(): List<StudyLogResponse> {
         return studyLogRepository.findAll().map { studyLog ->
-            val quizCount = quizRepository.findByStudyLogId(studyLog.id!!).size
+            val quizCount = quizRepository.countByStudyLogIdAndIsActiveInQueueTrue(studyLog.id!!)
             StudyLogResponse.from(studyLog, quizCount)
         }
     }
@@ -35,7 +35,7 @@ class StudyLogService(
     fun findById(id: Long): StudyLogResponse {
         val studyLog = studyLogRepository.findByIdOrNull(id)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "StudyLog not found: $id")
-        val quizCount = quizRepository.findByStudyLogId(studyLog.id!!).size
+        val quizCount = quizRepository.countByStudyLogIdAndIsActiveInQueueTrue(studyLog.id!!)
         return StudyLogResponse.from(studyLog, quizCount)
     }
 

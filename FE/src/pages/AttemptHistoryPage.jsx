@@ -15,6 +15,16 @@ export function formatDateShort(dateStr) {
   return d.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })
 }
 
+export function formatSelfEvaluation(evaluation) {
+  const labels = {
+    TOO_HARD: '어려워요',
+    OK: '적당해요',
+    TOO_EASY: '쉬워요',
+  }
+
+  return labels[evaluation] || '적당해요'
+}
+
 // 학습 기록 ID 기준 문제별 통계 집계
 export function buildQuizStats(items, studyLogId) {
   const filtered = studyLogId ? items.filter(i => i.studyLogId === studyLogId) : items
@@ -56,6 +66,8 @@ export function QuizRow({ quizStat }) {
       <div className="quiz-row__main">
         <p className="quiz-row__question">{quizStat.question}</p>
         <div className="quiz-row__meta">
+          <span className="quiz-row__difficulty">Lv.{latest?.difficulty ?? 5}</span>
+          <span className="quiz-row__evaluation">{formatSelfEvaluation(latest?.selfEvaluation)}</span>
           <span className="quiz-row__meta-item">{quizStat.attemptCount}회 풀이</span>
           <span className="quiz-row__meta-item">평균 {formatAvgSeconds(quizStat.avgElapsedSeconds)}</span>
           <span className="quiz-row__meta-item">최근 {formatDateShort(quizStat.lastAttemptedAt)}</span>
@@ -130,6 +142,8 @@ function CycleAttemptItem({ item }) {
         <span className="cycle-item__study-log">{item.studyLogTitle}</span>
         <p className="cycle-item__question">{item.question}</p>
         <div className="cycle-item__meta">
+          <span className="cycle-item__difficulty">Lv.{item.difficulty ?? 5}</span>
+          <span className="cycle-item__evaluation">{formatSelfEvaluation(item.selfEvaluation)}</span>
           <span className="cycle-item__time">{item.elapsedSeconds}초</span>
           <span className={`cycle-item__arrow ${expanded ? 'cycle-item__arrow--up' : ''}`}>▼</span>
         </div>

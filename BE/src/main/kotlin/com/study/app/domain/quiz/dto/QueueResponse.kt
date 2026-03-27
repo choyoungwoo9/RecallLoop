@@ -12,7 +12,8 @@ data class CurrentQuizResponse(
     val question: String,
     val studyLogId: Long,
     val studyLogTitle: String,
-    val queueOrder: Int
+    val queueOrder: Int,
+    val difficulty: Int
 )
 
 data class CurrentQuizEmptyResponse(
@@ -58,6 +59,12 @@ data class CompletionSummaryQuizItem(
     val answer: String,
     val submittedAnswer: String,
     val elapsedSeconds: Int
+)
+
+data class CompletionSummaryEvaluationResponse(
+    val studyLogId: Long,
+    val selfEvaluation: com.study.app.domain.quiz.SelfEvaluation,
+    val updatedAttemptCount: Int
 )
 
 data class CompletionSummaryResponse(

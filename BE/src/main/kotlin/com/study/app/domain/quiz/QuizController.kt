@@ -1,6 +1,8 @@
 package com.study.app.domain.quiz
 
 import com.study.app.domain.quiz.dto.QuizResponse
+import com.study.app.domain.quiz.dto.CompletionSummaryEvaluationResponse
+import com.study.app.domain.quiz.SelfEvaluation
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
@@ -59,4 +61,22 @@ class CompletionSummaryController(
     fun getCompletionSummary(@PathVariable studyLogId: Long): ResponseEntity<com.study.app.domain.quiz.dto.CompletionSummaryResponse> {
         return ResponseEntity.ok(quizService.getCompletionSummary(studyLogId))
     }
+
+    @PatchMapping("/evaluation")
+    @Operation(summary = "학습 로그 완료 난이도 평가 저장")
+    fun saveCompletionSummaryEvaluation(
+        @PathVariable studyLogId: Long,
+        @RequestBody request: CompletionSummaryEvaluationRequest
+    ): ResponseEntity<CompletionSummaryEvaluationResponse> {
+        return ResponseEntity.ok(
+            quizService.saveCompletionSummaryEvaluation(
+                studyLogId = studyLogId,
+                selfEvaluation = request.selfEvaluation
+            )
+        )
+    }
 }
+
+data class CompletionSummaryEvaluationRequest(
+    val selfEvaluation: SelfEvaluation
+)

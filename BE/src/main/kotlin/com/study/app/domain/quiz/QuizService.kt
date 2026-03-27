@@ -1,6 +1,7 @@
 package com.study.app.domain.quiz
 
 import com.study.app.domain.quiz.dto.QuizResponse
+import com.study.app.domain.quiz.dto.CompletionSummaryEvaluationResponse
 import com.study.app.domain.studylog.StudyLogRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
@@ -47,13 +48,13 @@ class QuizService(
         reorderAllQuizzes()
 
         // 재정렬 후 최신 데이터 조회
-        val updatedQuizzes = quizRepository.findByQuizConfigIdOrderByQueueOrder(configId)
+        val updatedQuizzes = quizRepository.findByQuizConfigIdAndIsActiveInQueueTrueOrderByQueueOrder(configId)
         return updatedQuizzes.map { QuizResponse.from(it) }
     }
 
     @Transactional(readOnly = true)
     fun findByStudyLogId(studyLogId: Long): List<QuizResponse> {
-        return quizRepository.findByStudyLogIdOrderByQueueOrder(studyLogId)
+        return quizRepository.findByStudyLogIdAndIsActiveInQueueTrueOrderByQueueOrder(studyLogId)
             .map { QuizResponse.from(it) }
     }
 
@@ -72,7 +73,15 @@ class QuizService(
      * 전체 문제를 queueOrder 기준으로 정렬하고 1부터 재정렬
      */
     private fun reorderAllQuizzes() {
-        val allQuizzes = quizRepository.findAll().sortedBy { it.id } // 안정적인 정렬을 위해 ID 기준
+        val allQuizzes = quizRepository.findAll()
+            .filter { it.isActiveInQueue }
+            .sortedWith(
+                compareBy<Quiz>(
+                    { if (it.queueOrder > 0) 0 else 1 },
+                    { if (it.queueOrder > 0) it.queueOrder else Int.MAX_VALUE },
+                    { it.id ?: Long.MAX_VALUE }
+                )
+            )
 
         allQuizzes.forEachIndexed { index, quiz ->
             val newQueueOrder = index + 1
@@ -88,20 +97,15 @@ class QuizService(
 
     /**
      * QueueState를 초기 상태로 리셋
-     * - currentQuiz: 첫 번째 문제로 설정
-     * - totalCount: 현재 전체 문제 수로 업데이트
-     * - completedCount: 보존 (새로운 totalCount를 초과하지 않도록 조정)
-     * - cycleStartedAt: 보존
+     * - active queue만 대상으로 재구성
      */
     private fun resetQueueState() {
-        val allQuizzes = quizRepository.findAll()
+        val allQuizzes = quizRepository.findAll().filter { it.isActiveInQueue }
         val firstQuiz = allQuizzes.minByOrNull { it.queueOrder }
         val newTotalCount = allQuizzes.size
 
-        // 기존 QueueState 조회 (completedCount 보존을 위해)
         val existingQueueState = queueStateRepository.findById(1L).orElse(null)
         val preservedCompletedCount = if (existingQueueState != null) {
-            // 새로운 totalCount를 초과하지 않도록 조정
             minOf(existingQueueState.completedCount, newTotalCount)
         } else {
             0
@@ -111,7 +115,9 @@ class QuizService(
             id = 1,
             currentQuiz = firstQuiz,
             totalCount = newTotalCount,
-            completedCount = preservedCompletedCount
+            completedCount = preservedCompletedCount,
+            cycleStartedAt = existingQueueState?.cycleStartedAt ?: java.time.LocalDateTime.now(),
+            cycleJustCompleted = existingQueueState?.cycleJustCompleted ?: false
         )
 
         queueStateRepository.save(queueState)
@@ -121,11 +127,39 @@ class QuizService(
         val studyLog = studyLogRepository.findById(studyLogId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "StudyLog not found: $studyLogId") }
 
-        val quizzes = quizRepository.findByStudyLogId(studyLogId)
+        val quizzes = quizRepository.findByStudyLogIdAndIsActiveInQueueTrueOrderByQueueOrder(studyLogId)
         // 현재 사이클의 attempt만 조회 (타임스탐프 비교 제거!)
         val attempts = quizAttemptRepository.findCurrentByStudyLogId(studyLogId)
 
         return com.study.app.domain.quiz.dto.CompletionSummaryResponse.from(studyLog, quizzes, attempts)
+    }
+
+    fun saveCompletionSummaryEvaluation(
+        studyLogId: Long,
+        selfEvaluation: SelfEvaluation
+    ): CompletionSummaryEvaluationResponse {
+        val activeQuizzes = quizRepository.findByStudyLogIdAndIsActiveInQueueTrueOrderByQueueOrder(studyLogId)
+        if (activeQuizzes.isEmpty()) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Active quizzes not found for StudyLog: $studyLogId")
+        }
+
+        val activeQuizIds = activeQuizzes.mapNotNull { it.id }.toSet()
+        val attempts = quizAttemptRepository.findCurrentByStudyLogId(studyLogId)
+            .filter { it.quiz.id in activeQuizIds }
+
+        val attemptedQuizIds = attempts.mapNotNull { it.quiz.id }.toSet()
+        if (attemptedQuizIds != activeQuizIds) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "StudyLog is not completed in current cycle: $studyLogId")
+        }
+
+        attempts.forEach { it.selfEvaluation = selfEvaluation }
+        quizAttemptRepository.saveAll(attempts)
+
+        return CompletionSummaryEvaluationResponse(
+            studyLogId = studyLogId,
+            selfEvaluation = selfEvaluation,
+            updatedAttemptCount = attempts.size
+        )
     }
 
     /**
@@ -165,7 +199,8 @@ class QuizService(
             answer = generated.answer,
             queueOrder = 0,  // 임시값, 나중에 재정렬
             difficulty = clampedDifficulty,
-            originalQuizId = originalId
+            originalQuizId = originalId,
+            isActiveInQueue = false
         )
         return quizRepository.save(variantQuiz)
     }
@@ -182,11 +217,17 @@ class QuizService(
         }
 
         // variant를 original의 자리에 배치
-        val variantWithOrder = variant.copy(queueOrder = original.queueOrder)
+        val variantWithOrder = variant.copy(
+            queueOrder = original.queueOrder,
+            isActiveInQueue = true
+        )
         quizRepository.save(variantWithOrder)
 
         // original을 큐에서 제외
-        val originalExcluded = original.copy(queueOrder = 0)
+        val originalExcluded = original.copy(
+            queueOrder = 0,
+            isActiveInQueue = false
+        )
         quizRepository.save(originalExcluded)
     }
 
@@ -199,6 +240,10 @@ class QuizService(
 
         for (attempt in attempts) {
             val quiz = attempt.quiz
+            if (!quiz.isActiveInQueue) {
+                continue
+            }
+
             val targetDifficulty = when (attempt.selfEvaluation) {
                 SelfEvaluation.TOO_EASY -> minOf(quiz.difficulty + 1, 10)
                 SelfEvaluation.TOO_HARD -> maxOf(quiz.difficulty - 1, 1)
