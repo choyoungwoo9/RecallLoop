@@ -110,7 +110,14 @@
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.03em;
+}
+
+.dashboard__stat-label {
   color: rgba(238, 244, 255, 0.82);
+}
+
+.dashboard__summary-label {
+  color: #61758c;
 }
 
 .dashboard__stat-value {
@@ -422,6 +429,7 @@
 .dashboard__toplog {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 14px;
   width: 100%;
   padding: 14px 16px;
@@ -455,7 +463,10 @@
 .dashboard__toplog-body {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
+  flex: 1;
+  text-align: left;
 }
 
 .dashboard__cta-stack {
