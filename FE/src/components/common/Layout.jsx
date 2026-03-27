@@ -1,12 +1,18 @@
 import { Link, useLocation } from 'react-router-dom'
 import logo from '../../assets/logo.svg'
-import { HomeIcon, QuizIcon, HistoryIcon } from './Icons'
+import { HomeIcon, QuizIcon, HistoryIcon, BookIcon } from './Icons'
 import './Layout.css'
 
 function Layout({ children }) {
   const location = useLocation()
 
-  const isActive = (path) => location.pathname === path
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/'
+    }
+
+    return location.pathname === path || location.pathname.startsWith(`${path}/`)
+  }
 
   return (
     <div className="layout">
@@ -26,6 +32,15 @@ function Layout({ children }) {
                 >
                   <HomeIcon className="layout__header-nav-icon" />
                   <span className="layout__header-nav-text">홈</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/study-logs"
+                  className={`layout__header-nav-link ${isActive('/study-logs') ? 'layout__header-nav-link--active' : ''}`}
+                >
+                  <BookIcon className="layout__header-nav-icon" />
+                  <span className="layout__header-nav-text">학습 기록</span>
                 </Link>
               </li>
               <li>

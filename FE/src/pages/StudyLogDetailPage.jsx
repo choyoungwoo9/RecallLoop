@@ -256,7 +256,7 @@ function StudyLogDetailPage() {
         try {
           await deleteStudyLog(id)
           setConfirmModal(prev => ({ ...prev, isOpen: false }))
-          navigate('/')
+          navigate('/study-logs')
         } catch (err) {
           setError('삭제에 실패했습니다.')
           setDeleting(false)
@@ -286,7 +286,7 @@ function StudyLogDetailPage() {
     <Layout>
       <div className="study-log-detail__error">
         <div className="study-log-detail__error-message">❌ {error}</div>
-        <Button onClick={() => navigate('/')}>목록으로</Button>
+        <Button onClick={() => navigate('/study-logs')}>목록으로</Button>
       </div>
     </Layout>
   )
@@ -304,7 +304,7 @@ function StudyLogDetailPage() {
           <div className="study-log-detail__actions">
             <Button
               variant="secondary"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/study-logs')}
             >
               ← 목록으로
             </Button>

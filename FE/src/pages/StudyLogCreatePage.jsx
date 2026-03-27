@@ -25,7 +25,7 @@ function StudyLogCreatePage() {
     setError(null)
     try {
       await createStudyLog({ title: title.trim(), content: content.trim() })
-      navigate('/')
+      navigate('/study-logs')
     } catch (err) {
       setError('저장에 실패했습니다. 다시 시도해주세요.')
       setSubmitting(false)
@@ -82,7 +82,7 @@ function StudyLogCreatePage() {
                 type="button"
                 variant="secondary"
                 size="lg"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/study-logs')}
               >
                 취소
               </Button>

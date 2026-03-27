@@ -47,7 +47,7 @@ function StudyLogListPage() {
         <div className="study-log-list__header">
           <div className="study-log-list__title-section">
             <h2 className="study-log-list__title">내 학습 기록</h2>
-            <p className="study-log-list__subtitle">학습한 내용을 정리하고 관리하세요</p>
+            <p className="study-log-list__subtitle">기록을 정리하고 문제 생성의 재료를 관리하세요</p>
           </div>
           <Button
             variant="primary"

@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 
 interface QuizAttemptHistoryRepository : JpaRepository<QuizAttemptHistory, Long> {
+    @Query("SELECT COUNT(DISTINCT h.migratedAt) FROM QuizAttemptHistory h")
+    fun countDistinctCycles(): Long
 
     @Query("""
         SELECT h FROM QuizAttemptHistory h
