@@ -1,9 +1,20 @@
 .dashboard {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 24px;
   width: 100%;
   animation: fadeIn var(--transition-base);
+  overflow: hidden;
+}
+
+.dashboard__floating-robot {
+  z-index: 1;
+}
+
+.dashboard > section {
+  position: relative;
+  z-index: 2;
 }
 
 .dashboard__hero {

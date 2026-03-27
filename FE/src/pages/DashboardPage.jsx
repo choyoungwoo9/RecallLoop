@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getDashboard } from '../api/dashboard'
 import Layout from '../components/common/Layout'
 import Button from '../components/common/Button'
 import Card from '../components/common/Card'
+import FloatingRobot from '../components/common/FloatingRobot'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import './DashboardPage.css'
 
@@ -42,6 +43,7 @@ function DashboardPage() {
   const [dashboard, setDashboard] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const dashboardRef = useRef(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -84,7 +86,14 @@ function DashboardPage() {
 
   return (
     <Layout>
-      <div className="dashboard">
+      <div className="dashboard" ref={dashboardRef}>
+        <FloatingRobot
+          variant="dashboard"
+          boundsRef={dashboardRef}
+          avoidSelectors={['.dashboard__cycle-actions', '.dashboard__toplogs', '.dashboard__cta-actions']}
+          className="dashboard__floating-robot"
+        />
+
         <section className="dashboard__hero">
           <div className="dashboard__hero-copy">
             <span className="dashboard__eyebrow">Recall Loop Dashboard</span>
@@ -174,7 +183,7 @@ function DashboardPage() {
                     학습 기록과 문제를 만들면 다음 문제가 여기 표시됩니다.
                   </div>
                 )}
-                <div className="dashboard__actions">
+                <div className="dashboard__actions dashboard__cycle-actions">
                   <Button variant="primary" size="lg" onClick={() => navigate('/queue/solve')}>
                     문제 풀기
                   </Button>
@@ -310,7 +319,7 @@ function DashboardPage() {
                   ? '기록을 정리하거나 새 문제를 생성해서 다음 루프를 준비하세요.'
                   : '먼저 학습 기록을 만들고 문제를 생성하면 이 대시보드가 자동으로 채워집니다.'}
               </p>
-              <div className="dashboard__actions dashboard__actions--stack">
+              <div className="dashboard__actions dashboard__actions--stack dashboard__cta-actions">
                 <Button variant="primary" size="lg" onClick={() => navigate('/study-logs/new')}>
                   새 학습 기록 작성
                 </Button>

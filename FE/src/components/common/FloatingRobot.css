@@ -1,0 +1,23 @@
+.floating-robot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  user-select: none;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.floating-robot--dashboard {
+  z-index: 2;
+  opacity: 0.24;
+  filter: drop-shadow(0 8px 18px rgba(21, 73, 129, 0.14));
+}
+
+.floating-robot--cinematic {
+  z-index: 1;
+  opacity: 0.88;
+  filter:
+    drop-shadow(0 14px 24px rgba(15, 92, 192, 0.18))
+    drop-shadow(0 0 34px rgba(139, 245, 255, 0.18));
+}

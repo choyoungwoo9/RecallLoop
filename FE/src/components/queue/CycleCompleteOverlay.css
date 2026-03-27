@@ -179,31 +179,7 @@
 }
 
 .cycle-complete-overlay__robot {
-  position: absolute;
-  top: 50%;
-  width: min(28vw, 320px);
-  aspect-ratio: 320 / 420;
-  opacity: 0.82;
-  pointer-events: none;
-  filter: drop-shadow(0 0 28px rgba(62, 164, 255, 0.24));
-  transition: opacity 0.35s ease, transform 0.35s ease;
-}
-
-.cycle-complete-overlay__robot--left {
-  left: clamp(-20px, 3vw, 36px);
-  transform: translateY(-50%);
-  animation: cycle-complete-robot-left 2.8s ease-in-out infinite;
-}
-
-.cycle-complete-overlay__robot--right {
-  right: clamp(-20px, 3vw, 36px);
-  transform: translateY(-50%) scaleX(-1);
-  animation: cycle-complete-robot-right 2.8s ease-in-out infinite 0.14s;
-}
-
-.cycle-complete-overlay__robot-svg {
-  width: 100%;
-  height: 100%;
+  z-index: 1;
 }
 
 .cycle-complete-overlay__center {
@@ -428,10 +404,6 @@
     linear-gradient(135deg, rgba(4, 12, 28, 0.98), rgba(5, 19, 38, 0.98) 45%, rgba(3, 12, 29, 0.98));
 }
 
-.cycle-complete-overlay--scene-finalizing .cycle-complete-overlay__robot {
-  opacity: 0.62;
-}
-
 .cycle-complete-overlay--scene-finalizing .cycle-complete-overlay__title {
   text-shadow:
     0 0 14px rgba(139, 245, 255, 0.26),
@@ -574,36 +546,6 @@
   45% {
     transform: translate(-18vw, -50%) rotate(11deg);
     opacity: 0.64;
-  }
-}
-
-@keyframes cycle-complete-robot-left {
-  0%,
-  100% {
-    transform: translate(-4vw, -50%) scale(0.95);
-    opacity: 0.28;
-  }
-  22% {
-    opacity: 0.9;
-  }
-  50% {
-    transform: translate(4vw, -50%) scale(1.02);
-    opacity: 0.82;
-  }
-}
-
-@keyframes cycle-complete-robot-right {
-  0%,
-  100% {
-    transform: translate(4vw, -50%) scaleX(-1) scale(0.95);
-    opacity: 0.26;
-  }
-  22% {
-    opacity: 0.86;
-  }
-  50% {
-    transform: translate(-4vw, -50%) scaleX(-1) scale(1.02);
-    opacity: 0.8;
   }
 }
 
