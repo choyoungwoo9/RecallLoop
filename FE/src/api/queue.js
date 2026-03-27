@@ -14,3 +14,6 @@ export const getCurrentQuiz = () =>
 
 export const submitAnswer = (data) =>
   api.post('/api/queue/submit', data).then(r => r.data)
+
+export const evaluateAttempt = (attemptId, selfEvaluation) =>
+  api.patch(`/api/attempts/${attemptId}/evaluate`, { selfEvaluation }).then(r => r.data)

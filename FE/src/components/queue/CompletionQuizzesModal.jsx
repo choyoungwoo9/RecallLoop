@@ -30,6 +30,15 @@ function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
     setExpandedIndex(expandedIndex === index ? null : index)
   }
 
+  const getEvaluationLabel = (evaluation) => {
+    const labels = {
+      TOO_HARD: '어려웠음',
+      OK: '적당했음',
+      TOO_EASY: '쉬웠음'
+    }
+    return labels[evaluation] || evaluation
+  }
+
   if (loading) {
     return (
       <div className="modal-overlay">
@@ -88,6 +97,11 @@ function CompletionQuizzesModal({ studyLog, isCycleComplete, onAction }) {
                       >
                         <div className="quiz-number">Q{index + 1}</div>
                         <div className="quiz-question">{quiz.question}</div>
+                        {quiz.selfEvaluation && (
+                          <div className={`quiz-evaluation-badge evaluation-${quiz.selfEvaluation.toLowerCase()}`}>
+                            {getEvaluationLabel(quiz.selfEvaluation)}
+                          </div>
+                        )}
                         <div className="expand-icon">
                           {expandedIndex === index ? '▼' : '▶'}
                         </div>
