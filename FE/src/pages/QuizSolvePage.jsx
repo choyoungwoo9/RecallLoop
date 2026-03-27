@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentQuiz, submitAnswer } from '../api/queue'
 import CompletionQuizzesModal from '../components/queue/CompletionQuizzesModal'
@@ -12,12 +12,20 @@ import ConfirmModal from '../components/common/ConfirmModal'
 import useTimerStore from '../store/timerStore'
 import './QuizSolvePage.css'
 
+const CYCLE_TRANSITION_PHASE_SCHEDULE = [
+  { phase: 'analyzing', delayMs: 1800 },
+  { phase: 'regenerating', delayMs: 3600 },
+  { phase: 'finalizing', delayMs: 5200 },
+]
+
+const CYCLE_TRANSITION_MESSAGES = {
+  cycle_complete: 'AI 제어실이 새 루프를 기동합니다',
+  analyzing: '이전 응답 패턴을 분석하고 있습니다',
+  regenerating: 'AI가 다음 사이클 문제 세트를 재배치하고 있습니다',
+  finalizing: '다음 루프를 안정화하고 있습니다',
+}
+
 function QuizSolvePage() {
-  const adaptiveMessages = [
-    '이전 사이클 응답을 분석하고 있습니다',
-    '난이도에 맞는 문제를 다시 배치하고 있습니다',
-    '다음 사이클 문제 세트를 준비하고 있습니다',
-  ]
   const [currentQuiz, setCurrentQuiz] = useState(null)
   const [submittedAnswer, setSubmittedAnswer] = useState('')
   const [loading, setLoading] = useState(true)
@@ -25,85 +33,131 @@ function QuizSolvePage() {
   const [completedStudyLog, setCompletedStudyLog] = useState(null)
   const [showQuizzesModal, setShowQuizzesModal] = useState(false)
   const [pendingCycleComplete, setPendingCycleComplete] = useState(false)
-  const [showCycleCompleteOverlay, setShowCycleCompleteOverlay] = useState(false)
+  const [isCycleTransitionPlaying, setIsCycleTransitionPlaying] = useState(false)
+  const [cycleTransitionPhase, setCycleTransitionPhase] = useState('cycle_complete')
+  const [cycleTransitionCanClose, setCycleTransitionCanClose] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', type: '' })
-  const [isAdaptiveRefreshing, setIsAdaptiveRefreshing] = useState(false)
-  const [adaptiveMessageIndex, setAdaptiveMessageIndex] = useState(0)
   const startTimer = useTimerStore((state) => state.startTimer)
   const stopTimer = useTimerStore((state) => state.stopTimer)
   const navigate = useNavigate()
+  const isMountedRef = useRef(true)
+  const cycleTransitionTimeoutsRef = useRef([])
+  const cycleTransitionInFlightRef = useRef(false)
+  const cycleTransitionRequestIdRef = useRef(0)
+  const cycleTransitionMessage = CYCLE_TRANSITION_MESSAGES[cycleTransitionPhase]
 
   useEffect(() => {
-    loadCurrentQuiz()
-  }, [])
-
-  useEffect(() => {
-    if (currentQuiz) {
-      startTimer()
-      return () => stopTimer()
-    }
-  }, [currentQuiz, startTimer, stopTimer])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1)
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    if (!isAdaptiveRefreshing) {
-      setAdaptiveMessageIndex(0)
-      return
-    }
-
-    const interval = setInterval(() => {
-      setAdaptiveMessageIndex((prev) => (prev + 1) % adaptiveMessages.length)
-    }, 900)
-
-    return () => clearInterval(interval)
-  }, [adaptiveMessages.length, isAdaptiveRefreshing])
-
-  const loadCurrentQuiz = async ({ showAdaptiveRefresh = false } = {}) => {
-    const refreshStart = Date.now()
-
-    try {
-      if (showAdaptiveRefresh) {
-        setAdaptiveMessageIndex(0)
-        setIsAdaptiveRefreshing(true)
-        await new Promise((resolve) => setTimeout(resolve, 250))
-      } else {
-        setLoading(true)
-      }
-
-      const quiz = await getCurrentQuiz()
-      if (quiz && quiz.id) {
-        setCurrentQuiz(quiz)
-        setSubmittedAnswer('')
-        setElapsedSeconds(0)
-      } else {
-        setCurrentQuiz(null)
-      }
-    } catch (error) {
-      console.error('문제 로드 실패:', error)
-      setCurrentQuiz(null)
-    } finally {
-      if (showAdaptiveRefresh) {
-        const elapsed = Date.now() - refreshStart
-        const remaining = Math.max(0, 1400 - elapsed)
-        if (remaining > 0) {
-          await new Promise((resolve) => setTimeout(resolve, remaining))
-        }
-        setIsAdaptiveRefreshing(false)
-      } else {
+    const initialize = async () => {
+      setLoading(true)
+      await loadCurrentQuiz()
+      if (isMountedRef.current) {
         setLoading(false)
       }
     }
+
+    initialize()
+
+    return () => {
+      isMountedRef.current = false
+      clearCycleTransitionTimers()
+      stopTimer()
+    }
+  }, [stopTimer])
+
+  useEffect(() => {
+    if (!currentQuiz || isCycleTransitionPlaying) {
+      stopTimer()
+      return undefined
+    }
+
+    startTimer()
+    return () => stopTimer()
+  }, [currentQuiz, isCycleTransitionPlaying, startTimer, stopTimer])
+
+  useEffect(() => {
+    if (isCycleTransitionPlaying) {
+      return undefined
+    }
+
+    const interval = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1)
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [isCycleTransitionPlaying])
+
+  const clearCycleTransitionTimers = () => {
+    cycleTransitionTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId))
+    cycleTransitionTimeoutsRef.current = []
+  }
+
+  const applyLoadedQuiz = (quiz) => {
+    if (!isMountedRef.current) {
+      return
+    }
+
+    setCurrentQuiz(quiz)
+    setSubmittedAnswer('')
+    setElapsedSeconds(0)
+  }
+
+  const loadCurrentQuiz = async () => {
+    try {
+      const quiz = await getCurrentQuiz()
+      const nextQuiz = quiz && quiz.id ? quiz : null
+      applyLoadedQuiz(nextQuiz)
+      return nextQuiz
+    } catch (error) {
+      console.error('문제 로드 실패:', error)
+      applyLoadedQuiz(null)
+      return null
+    }
+  }
+
+  const scheduleCycleTransitionPhases = (requestId) => {
+    clearCycleTransitionTimers()
+
+    cycleTransitionTimeoutsRef.current = CYCLE_TRANSITION_PHASE_SCHEDULE.map(({ phase, delayMs }) =>
+      window.setTimeout(() => {
+        if (!isMountedRef.current || cycleTransitionRequestIdRef.current !== requestId) {
+          return
+        }
+
+        setCycleTransitionPhase(phase)
+      }, delayMs)
+    )
+  }
+
+  const runCycleTransition = () => {
+    if (cycleTransitionInFlightRef.current) {
+      return
+    }
+
+    const requestId = Date.now()
+    cycleTransitionInFlightRef.current = true
+    cycleTransitionRequestIdRef.current = requestId
+
+    setIsCycleTransitionPlaying(true)
+    setCycleTransitionPhase('cycle_complete')
+    setCycleTransitionCanClose(false)
+
+    scheduleCycleTransitionPhases(requestId)
+
+    void (async () => {
+      await loadCurrentQuiz()
+
+      if (!isMountedRef.current || cycleTransitionRequestIdRef.current !== requestId) {
+        return
+      }
+
+      setCycleTransitionCanClose(true)
+    })()
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
     if (!submittedAnswer.trim()) {
       setConfirmModal({
         isOpen: true,
@@ -114,12 +168,17 @@ function QuizSolvePage() {
       return
     }
 
+    if (cycleTransitionInFlightRef.current) {
+      return
+    }
+
     setSubmitting(true)
+
     try {
       const result = await submitAnswer({
         quizId: currentQuiz.id,
-        submittedAnswer: submittedAnswer,
-        elapsedSeconds: elapsedSeconds
+        submittedAnswer,
+        elapsedSeconds
       })
 
       if (result.completedStudyLog) {
@@ -127,13 +186,17 @@ function QuizSolvePage() {
         setShowQuizzesModal(true)
         setPendingCycleComplete(result.isCycleComplete)
         setSubmitting(false)
-      } else if (result.isCycleComplete) {
-        setShowCycleCompleteOverlay(true)
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        await loadCurrentQuiz()
-        setSubmitting(false)
+        return
       }
+
+      if (result.isCycleComplete) {
+        runCycleTransition()
+        return
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      await loadCurrentQuiz()
+      setSubmitting(false)
     } catch (error) {
       console.error('답 제출 실패:', error)
       setConfirmModal({
@@ -147,20 +210,32 @@ function QuizSolvePage() {
   }
 
   const handleQuizzesModalAction = (action) => {
-    if (action === 'continue') {
-      setShowQuizzesModal(false)
-      if (pendingCycleComplete) {
-        setPendingCycleComplete(false)
-        setShowCycleCompleteOverlay(true)
-      } else {
-        loadCurrentQuiz()
-      }
+    if (action !== 'continue') {
+      return
     }
+
+    setShowQuizzesModal(false)
+
+    if (pendingCycleComplete) {
+      setPendingCycleComplete(false)
+      runCycleTransition()
+      return
+    }
+
+    void loadCurrentQuiz()
   }
 
-  const handleCycleCompleteOverlayFinished = async () => {
-    setShowCycleCompleteOverlay(false)
-    await loadCurrentQuiz({ showAdaptiveRefresh: true })
+  const handleCycleTransitionFinished = () => {
+    clearCycleTransitionTimers()
+    cycleTransitionInFlightRef.current = false
+
+    if (!isMountedRef.current) {
+      return
+    }
+
+    setIsCycleTransitionPlaying(false)
+    setCycleTransitionCanClose(false)
+    setCycleTransitionPhase('cycle_complete')
     setSubmitting(false)
   }
 
@@ -189,7 +264,7 @@ function QuizSolvePage() {
     )
   }
 
-  if (!currentQuiz) {
+  if (!currentQuiz && !isCycleTransitionPlaying) {
     return (
       <Layout>
         <div className="quiz-solve__empty">
@@ -214,86 +289,61 @@ function QuizSolvePage() {
     <Layout>
       <div className="quiz-solve">
         <CycleCompleteOverlay
-          open={showCycleCompleteOverlay}
-          onFinished={handleCycleCompleteOverlayFinished}
+          open={isCycleTransitionPlaying}
+          phase={cycleTransitionPhase}
+          message={cycleTransitionMessage}
+          canClose={cycleTransitionCanClose}
+          onFinished={handleCycleTransitionFinished}
         />
-
-        {isAdaptiveRefreshing && (
-          <div className="quiz-solve__adaptive-refresh">
-            <div className="quiz-solve__adaptive-backdrop" />
-            <div className="quiz-solve__adaptive-panel">
-              <div className="quiz-solve__adaptive-orbits">
-                <div className="quiz-solve__adaptive-core" />
-                <div className="quiz-solve__adaptive-ring quiz-solve__adaptive-ring--outer" />
-                <div className="quiz-solve__adaptive-ring quiz-solve__adaptive-ring--middle" />
-                <div className="quiz-solve__adaptive-ring quiz-solve__adaptive-ring--inner" />
-                <span className="quiz-solve__adaptive-pulse quiz-solve__adaptive-pulse--one" />
-                <span className="quiz-solve__adaptive-pulse quiz-solve__adaptive-pulse--two" />
-                <span className="quiz-solve__adaptive-pulse quiz-solve__adaptive-pulse--three" />
-              </div>
-
-              <div className="quiz-solve__adaptive-copy">
-                <span className="quiz-solve__adaptive-kicker">Adaptive Recall Engine</span>
-                <h2 className="quiz-solve__adaptive-title">AI가 다음 사이클 문제를 업데이트 중입니다</h2>
-                <p className="quiz-solve__adaptive-message">
-                  {adaptiveMessages[adaptiveMessageIndex]}
-                </p>
-                <div className="quiz-solve__adaptive-progress">
-                  <span className="quiz-solve__adaptive-dot" />
-                  <span className="quiz-solve__adaptive-dot" />
-                  <span className="quiz-solve__adaptive-dot" />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         <QueueProgressBar />
 
-        <div className="quiz-solve__container">
-          <div className="quiz-solve__header">
-            <div className="quiz-solve__title-section">
-              <h2 className="quiz-solve__title">{currentQuiz.studyLogTitle}</h2>
-              <p className="quiz-solve__subtitle">문제를 읽고 답변을 작성하세요</p>
+        {currentQuiz && (
+          <div className="quiz-solve__container">
+            <div className="quiz-solve__header">
+              <div className="quiz-solve__title-section">
+                <h2 className="quiz-solve__title">{currentQuiz.studyLogTitle}</h2>
+                <p className="quiz-solve__subtitle">문제를 읽고 답변을 작성하세요</p>
+              </div>
+              <div className="quiz-solve__timer">{formatTime(elapsedSeconds)}</div>
             </div>
-            <div className="quiz-solve__timer">{formatTime(elapsedSeconds)}</div>
-          </div>
 
-          <div className="quiz-solve__question-area">
-            <div className="quiz-solve__question-number">Q</div>
-            <div className="quiz-solve__question-header">
-              <p className="quiz-solve__question">{currentQuiz.question}</p>
-              {currentQuiz.difficulty && (
-                <div className={`quiz-solve__difficulty-badge difficulty-${getDifficultyLevel(currentQuiz.difficulty)}`}>
-                  Lv.{currentQuiz.difficulty}
-                </div>
-              )}
+            <div className="quiz-solve__question-area">
+              <div className="quiz-solve__question-number">Q</div>
+              <div className="quiz-solve__question-header">
+                <p className="quiz-solve__question">{currentQuiz.question}</p>
+                {currentQuiz.difficulty && (
+                  <div className={`quiz-solve__difficulty-badge difficulty-${getDifficultyLevel(currentQuiz.difficulty)}`}>
+                    Lv.{currentQuiz.difficulty}
+                  </div>
+                )}
+              </div>
             </div>
+
+            <form onSubmit={handleSubmit} className="quiz-solve__form">
+              <Textarea
+                label="답변"
+                value={submittedAnswer}
+                onChange={(e) => setSubmittedAnswer(e.target.value)}
+                placeholder="여기에 답변을 입력하세요"
+                rows={8}
+                size="lg"
+                required
+              />
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="quiz-solve__submit-btn"
+                loading={submitting}
+                disabled={submitting || isCycleTransitionPlaying}
+              >
+                ✅ 제출하기
+              </Button>
+            </form>
           </div>
-
-          <form onSubmit={handleSubmit} className="quiz-solve__form">
-            <Textarea
-              label="답변"
-              value={submittedAnswer}
-              onChange={(e) => setSubmittedAnswer(e.target.value)}
-              placeholder="여기에 답변을 입력하세요"
-              rows={8}
-              size="lg"
-              required
-            />
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              className="quiz-solve__submit-btn"
-              loading={submitting}
-              disabled={submitting}
-            >
-              ✅ 제출하기
-            </Button>
-          </form>
-        </div>
+        )}
 
         {showQuizzesModal && completedStudyLog && (
           <CompletionQuizzesModal

@@ -1,6 +1,35 @@
 import { useEffect, useRef, useState } from 'react'
 import './CycleCompleteOverlay.css'
 
+const PHASE_ORDER = ['cycle_complete', 'analyzing', 'regenerating', 'finalizing']
+
+const PHASE_COPY = {
+  cycle_complete: {
+    kicker: 'Adaptive Loop Sequence',
+    title: 'CYCLE COMPLETE',
+    subtitle: '한 바퀴 완료',
+    readouts: ['LOOP LOCKED', 'CONTROL ROOM ONLINE', 'NEXT LOOP ARMING'],
+  },
+  analyzing: {
+    kicker: 'Response Matrix Scan',
+    title: 'PATTERN ANALYSIS',
+    subtitle: '이전 응답 패턴 분석 중',
+    readouts: ['MEMORY TRACE', 'SIGNAL CLUSTERING', 'TEMPO SAMPLING'],
+  },
+  regenerating: {
+    kicker: 'Quiz Regeneration',
+    title: 'AI REMAPPING',
+    subtitle: 'AI 문제 세트 재배치 중',
+    readouts: ['DIFFICULTY SYNC', 'VARIANT WEAVING', 'QUEUE REASSEMBLY'],
+  },
+  finalizing: {
+    kicker: 'Loop Stabilization',
+    title: 'NEXT LOOP READY',
+    subtitle: '다음 루프 기동 준비 완료',
+    readouts: ['CALIBRATION LOCK', 'QUEUE STABLE', 'READY FOR RECALL'],
+  },
+}
+
 function RobotSilhouette({ side }) {
   return (
     <svg
@@ -46,9 +75,11 @@ function DataSlashes() {
   )
 }
 
-function CycleCompleteOverlay({ open, onFinished }) {
-  const [phase, setPhase] = useState('idle')
+function CycleCompleteOverlay({ open, phase, message, canClose, onFinished }) {
+  const [visualState, setVisualState] = useState('idle')
+  const [minimumElapsed, setMinimumElapsed] = useState(false)
   const onFinishedRef = useRef(onFinished)
+  const phaseCopy = PHASE_COPY[phase] ?? PHASE_COPY.cycle_complete
 
   useEffect(() => {
     onFinishedRef.current = onFinished
@@ -56,49 +87,64 @@ function CycleCompleteOverlay({ open, onFinished }) {
 
   useEffect(() => {
     if (!open) {
-      setPhase('idle')
+      setVisualState('idle')
+      setMinimumElapsed(false)
       return undefined
     }
 
-    setPhase('enter')
+    setVisualState('enter')
+    setMinimumElapsed(false)
 
-    const activeTimer = window.setTimeout(() => {
-      setPhase('active')
+    const enterTimer = window.setTimeout(() => {
+      setVisualState('active')
     }, 400)
 
-    const exitTimer = window.setTimeout(() => {
-      setPhase('exit')
-    }, 2500)
+    const minimumTimer = window.setTimeout(() => {
+      setMinimumElapsed(true)
+    }, 6000)
+
+    return () => {
+      window.clearTimeout(enterTimer)
+      window.clearTimeout(minimumTimer)
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open || !canClose || !minimumElapsed || visualState === 'exit') {
+      return undefined
+    }
+
+    setVisualState('exit')
 
     const finishTimer = window.setTimeout(() => {
       onFinishedRef.current?.()
-    }, 3000)
+    }, 500)
 
     return () => {
-      window.clearTimeout(activeTimer)
-      window.clearTimeout(exitTimer)
       window.clearTimeout(finishTimer)
     }
-  }, [open])
+  }, [canClose, minimumElapsed, open, visualState])
 
   if (!open) {
     return null
   }
 
   return (
-    <div className={`cycle-complete-overlay cycle-complete-overlay--${phase}`} role="presentation">
+    <div
+      className={`cycle-complete-overlay cycle-complete-overlay--${visualState} cycle-complete-overlay--scene-${phase} ${canClose ? 'cycle-complete-overlay--ready' : ''}`}
+      role="presentation"
+    >
       <div className="cycle-complete-overlay__backdrop" />
       <div className="cycle-complete-overlay__vignette" />
       <div className="cycle-complete-overlay__haze cycle-complete-overlay__haze--top" />
       <div className="cycle-complete-overlay__haze cycle-complete-overlay__haze--bottom" />
       <div className="cycle-complete-overlay__grid" />
       <div className="cycle-complete-overlay__scanlines" />
-
+      <div className="cycle-complete-overlay__particles" />
       <div className="cycle-complete-overlay__streak cycle-complete-overlay__streak--left" />
       <div className="cycle-complete-overlay__streak cycle-complete-overlay__streak--right" />
       <div className="cycle-complete-overlay__beam cycle-complete-overlay__beam--left" />
       <div className="cycle-complete-overlay__beam cycle-complete-overlay__beam--right" />
-      <div className="cycle-complete-overlay__particles" />
       <DataSlashes />
 
       <div className="cycle-complete-overlay__robot cycle-complete-overlay__robot--left">
@@ -133,17 +179,24 @@ function CycleCompleteOverlay({ open, onFinished }) {
         </div>
 
         <div className="cycle-complete-overlay__copy">
-          <span className="cycle-complete-overlay__kicker">Adaptive Loop Sequence</span>
-          <h2 className="cycle-complete-overlay__title">CYCLE COMPLETE</h2>
-          <p className="cycle-complete-overlay__subtitle">한 바퀴 완료</p>
-          <p className="cycle-complete-overlay__description">
-            AI 제어실이 응답 흐름을 스캔하고 다음 루프를 재배치합니다.
-          </p>
+          <span className="cycle-complete-overlay__kicker">{phaseCopy.kicker}</span>
+          <h2 className="cycle-complete-overlay__title">{phaseCopy.title}</h2>
+          <p className="cycle-complete-overlay__subtitle">{phaseCopy.subtitle}</p>
+          <p className="cycle-complete-overlay__description">{message}</p>
+
+          <div className="cycle-complete-overlay__timeline" aria-hidden="true">
+            {PHASE_ORDER.map((step) => (
+              <span
+                key={step}
+                className={`cycle-complete-overlay__timeline-step ${step === phase ? 'cycle-complete-overlay__timeline-step--active' : ''} ${PHASE_ORDER.indexOf(step) < PHASE_ORDER.indexOf(phase) ? 'cycle-complete-overlay__timeline-step--passed' : ''}`}
+              />
+            ))}
+          </div>
 
           <div className="cycle-complete-overlay__readouts" aria-hidden="true">
-            <span>NEURAL ROUTING</span>
-            <span>DIFFICULTY SYNC</span>
-            <span>NEXT LOOP ARMING</span>
+            {phaseCopy.readouts.map((readout) => (
+              <span key={readout}>{readout}</span>
+            ))}
           </div>
         </div>
       </div>
