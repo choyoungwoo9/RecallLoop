@@ -26,8 +26,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # GEMINI_API_KEY=your_actual_key
 # → 자동으로 로드됨 (dotenv-java 사용)
 
-# 개발 서버 시작 (모두 자동으로 시작)
-./start-dev.sh
+# ⚠️ 개발 서버 시작은 항상 restart-dev.sh 사용 (기존 프로세스 정리 후 재시작)
+./restart-dev.sh
 
 # 개발 서버 중지
 ./stop-dev.sh
@@ -343,7 +343,7 @@ npm run dev
 
 **또는 전체 자동화**:
 ```bash
-./start-dev.sh  # BE + FE 동시 시작
+./restart-dev.sh  # BE + FE 동시 재시작 (항상 이 명령 사용)
 ```
 
 **실행 실패 시**:
