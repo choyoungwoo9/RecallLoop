@@ -24,6 +24,10 @@ interface QuizAttemptHistoryRepository : JpaRepository<QuizAttemptHistory, Long>
     fun findLatestByQuizId(quizId: Long): QuizAttemptHistory?
 
     @Modifying
+    @Query("DELETE FROM QuizAttemptHistory h WHERE h.quiz.id = :quizId")
+    fun deleteByQuizId(quizId: Long): Int
+
+    @Modifying
     @Query("""
         DELETE FROM quiz_attempt_history
         WHERE quiz_id IN (

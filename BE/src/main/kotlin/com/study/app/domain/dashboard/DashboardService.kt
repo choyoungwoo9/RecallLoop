@@ -22,8 +22,12 @@ class DashboardService(
 
     fun getDashboard(): DashboardResponse {
         val activeQuizzes = quizRepository.findAllByIsActiveInQueueTrueOrderByQueueOrder()
-        val currentAttempts = quizAttemptRepository.findAll().map { AttemptSnapshot.fromCurrent(it) }
-        val historyAttempts = quizAttemptHistoryRepository.findAll().map { AttemptSnapshot.fromHistory(it) }
+        val currentAttempts = quizAttemptRepository.findAll().mapNotNull { attempt ->
+            runCatching { AttemptSnapshot.fromCurrent(attempt) }.getOrNull()
+        }
+        val historyAttempts = quizAttemptHistoryRepository.findAll().mapNotNull { history ->
+            runCatching { AttemptSnapshot.fromHistory(history) }.getOrNull()
+        }
         val attempts = (currentAttempts + historyAttempts).sortedByDescending { it.attemptedAt }
         val today = LocalDate.now(zoneId)
         val todayAttempts = attempts.filter { it.attemptedAt.toLocalDate() == today }
@@ -32,6 +36,19 @@ class DashboardService(
         val totalStudySeconds = attempts.sumOf { it.elapsedSeconds }
         val dislikedCount = attempts.count { it.problemFeedback == ProblemFeedback.DISLIKED }
         val queueState = queueStateRepository.findById(1L).orElse(null)
+
+        val nextQuiz = runCatching {
+            queueState?.currentQuiz?.let { quiz ->
+                CurrentQuizResponse(
+                    id = quiz.id!!,
+                    question = quiz.question,
+                    studyLogId = quiz.studyLog.id!!,
+                    studyLogTitle = quiz.studyLog.title,
+                    queueOrder = quiz.queueOrder,
+                    difficulty = quiz.difficulty
+                )
+            }
+        }.getOrNull()
 
         return DashboardResponse(
             overview = DashboardOverviewResponse(
@@ -77,16 +94,7 @@ class DashboardService(
                 medium = activeQuizzes.count { it.difficulty in 4..7 },
                 hard = activeQuizzes.count { it.difficulty in 8..10 }
             ),
-            nextQuiz = queueState?.currentQuiz?.let { quiz ->
-                CurrentQuizResponse(
-                    id = quiz.id!!,
-                    question = quiz.question,
-                    studyLogId = quiz.studyLog.id!!,
-                    studyLogTitle = quiz.studyLog.title,
-                    queueOrder = quiz.queueOrder,
-                    difficulty = quiz.difficulty
-                )
-            }
+            nextQuiz = nextQuiz
         )
     }
 

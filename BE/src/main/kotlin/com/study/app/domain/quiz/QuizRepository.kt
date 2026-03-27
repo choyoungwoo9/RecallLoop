@@ -1,6 +1,7 @@
 package com.study.app.domain.quiz
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 
 interface QuizRepository : JpaRepository<Quiz, Long> {
@@ -29,4 +30,8 @@ interface QuizRepository : JpaRepository<Quiz, Long> {
         AND q.difficulty = :difficulty
     """)
     fun findByOriginalQuizIdAndDifficulty(originalQuizId: Long, difficulty: Int): Quiz?
+
+    @Modifying
+    @Query("DELETE FROM Quiz q WHERE q.studyLog.id = :studyLogId")
+    fun deleteByStudyLogId(studyLogId: Long): Int
 }

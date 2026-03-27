@@ -1,6 +1,10 @@
 package com.study.app.domain.studylog
 
 import com.study.app.domain.quiz.QuizRepository
+import com.study.app.domain.quiz.QuizAttemptHistoryRepository
+import com.study.app.domain.quiz.QuizAttemptRepository
+import com.study.app.domain.quiz.QuizConfigRepository
+import com.study.app.domain.quiz.QuizService
 import com.study.app.domain.studylog.dto.StudyLogRequest
 import com.study.app.domain.studylog.dto.StudyLogResponse
 import org.springframework.data.repository.findByIdOrNull
@@ -13,7 +17,11 @@ import org.springframework.web.server.ResponseStatusException
 @Transactional
 class StudyLogService(
     private val studyLogRepository: StudyLogRepository,
-    private val quizRepository: QuizRepository
+    private val quizRepository: QuizRepository,
+    private val quizConfigRepository: QuizConfigRepository,
+    private val quizAttemptRepository: QuizAttemptRepository,
+    private val quizAttemptHistoryRepository: QuizAttemptHistoryRepository,
+    private val quizService: QuizService
 ) {
     fun create(request: StudyLogRequest): StudyLogResponse {
         val studyLog = StudyLog(
@@ -43,6 +51,12 @@ class StudyLogService(
         if (!studyLogRepository.existsById(id)) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "StudyLog not found: $id")
         }
+
+        quizAttemptRepository.deleteByStudyLogId(id)
+        quizAttemptHistoryRepository.deleteByStudyLogId(id)
+        quizRepository.deleteByStudyLogId(id)
+        quizConfigRepository.deleteByStudyLogId(id)
         studyLogRepository.deleteById(id)
+        quizService.syncQueueState()
     }
 }

@@ -17,6 +17,7 @@ class QuizService(
     private val studyLogRepository: StudyLogRepository,
     private val queueStateRepository: QueueStateRepository,
     private val quizAttemptRepository: QuizAttemptRepository,
+    private val quizAttemptHistoryRepository: QuizAttemptHistoryRepository,
     private val geminiClient: GeminiClient
 ) {
     fun generateQuizzes(configId: Long): List<QuizResponse> {
@@ -59,13 +60,17 @@ class QuizService(
     }
 
     fun delete(id: Long) {
-        val quiz = quizRepository.findByIdOrNull(id)
+        quizRepository.findByIdOrNull(id)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Quiz not found: $id")
 
-        // 문제 삭제
+        quizAttemptRepository.deleteByQuizId(id)
+        quizAttemptHistoryRepository.deleteByQuizId(id)
         quizRepository.deleteById(id)
 
-        // 전체 queueOrder를 1부터 새로 정렬
+        reorderAllQuizzes()
+    }
+
+    fun syncQueueState() {
         reorderAllQuizzes()
     }
 

@@ -1,8 +1,8 @@
 package com.study.app.domain.quiz
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
-import org.springframework.data.repository.query.Param
 import java.time.LocalDateTime
 
 interface QuizAttemptRepository : JpaRepository<QuizAttempt, Long> {
@@ -41,4 +41,17 @@ interface QuizAttemptRepository : JpaRepository<QuizAttempt, Long> {
         ORDER BY qa.attemptedAt DESC
     """)
     fun findCurrentByStudyLogId(studyLogId: Long): List<QuizAttempt>
+
+    @Modifying
+    @Query("DELETE FROM QuizAttempt qa WHERE qa.quiz.id = :quizId")
+    fun deleteByQuizId(quizId: Long): Int
+
+    @Modifying
+    @Query("""
+        DELETE FROM quiz_attempt
+        WHERE quiz_id IN (
+            SELECT q.id FROM quiz q WHERE q.study_log_id = :studyLogId
+        )
+    """, nativeQuery = true)
+    fun deleteByStudyLogId(studyLogId: Long): Int
 }
