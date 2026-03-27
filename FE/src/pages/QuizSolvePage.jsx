@@ -48,6 +48,8 @@ function QuizSolvePage() {
   const cycleTransitionMessage = CYCLE_TRANSITION_MESSAGES[cycleTransitionPhase]
 
   useEffect(() => {
+    isMountedRef.current = true
+
     const initialize = async () => {
       setLoading(true)
       await loadCurrentQuiz()
