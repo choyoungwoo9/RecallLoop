@@ -10,7 +10,7 @@ data class QueueStatusResponse(
 data class CurrentQuizResponse(
     val id: Long,
     val question: String,
-    val studyLogId: Long,
+    val studyLogId: Long?,
     val studyLogTitle: String,
     val queueOrder: Int,
     val difficulty: Int

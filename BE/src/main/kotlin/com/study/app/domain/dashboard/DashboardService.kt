@@ -37,18 +37,16 @@ class DashboardService(
         val dislikedCount = attempts.count { it.problemFeedback == ProblemFeedback.DISLIKED }
         val queueState = queueStateRepository.findById(1L).orElse(null)
 
-        val nextQuiz = runCatching {
-            queueState?.currentQuiz?.let { quiz ->
-                CurrentQuizResponse(
-                    id = quiz.id!!,
-                    question = quiz.question,
-                    studyLogId = quiz.studyLog.id!!,
-                    studyLogTitle = quiz.studyLog.title,
-                    queueOrder = quiz.queueOrder,
-                    difficulty = quiz.difficulty
-                )
-            }
-        }.getOrNull()
+        val nextQuiz = queueState?.currentQuiz?.let { quiz ->
+            CurrentQuizResponse(
+                id = quiz.id!!,
+                question = quiz.question,
+                studyLogId = quiz.studyLog?.id,
+                studyLogTitle = quiz.studyLog?.title ?: "(삭제된 기록)",
+                queueOrder = quiz.queueOrder,
+                difficulty = quiz.difficulty
+            )
+        }
 
         return DashboardResponse(
             overview = DashboardOverviewResponse(
@@ -162,8 +160,8 @@ class DashboardService(
         companion object {
             fun fromCurrent(attempt: QuizAttempt) = AttemptSnapshot(
                 quizId = attempt.quiz.id!!,
-                studyLogId = attempt.quiz.studyLog.id!!,
-                studyLogTitle = attempt.quiz.studyLog.title,
+                studyLogId = attempt.quiz.studyLog?.id ?: 0L,
+                studyLogTitle = attempt.quiz.studyLog?.title ?: "(삭제된 기록)",
                 attemptedAt = attempt.attemptedAt,
                 elapsedSeconds = attempt.elapsedSeconds,
                 selfEvaluation = attempt.selfEvaluation,
@@ -172,8 +170,8 @@ class DashboardService(
 
             fun fromHistory(history: QuizAttemptHistory) = AttemptSnapshot(
                 quizId = history.quiz.id!!,
-                studyLogId = history.quiz.studyLog.id!!,
-                studyLogTitle = history.quiz.studyLog.title,
+                studyLogId = history.quiz.studyLog?.id ?: 0L,
+                studyLogTitle = history.quiz.studyLog?.title ?: "(삭제된 기록)",
                 attemptedAt = history.attemptedAt,
                 elapsedSeconds = history.elapsedSeconds,
                 selfEvaluation = history.selfEvaluation,

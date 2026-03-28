@@ -12,11 +12,11 @@ data class Quiz(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quiz_config_id", nullable = false)
-    val quizConfig: QuizConfig,
+    @JoinColumn(name = "quiz_config_id", nullable = true)
+    val quizConfig: QuizConfig?,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "study_log_id", nullable = false)
-    val studyLog: StudyLog,
+    @JoinColumn(name = "study_log_id", nullable = true)
+    val studyLog: StudyLog?,
     val question: String,
     val answer: String,
     val queueOrder: Int,

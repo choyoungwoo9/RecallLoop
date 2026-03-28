@@ -3,6 +3,7 @@ package com.study.app.domain.quiz
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 interface QuizRepository : JpaRepository<Quiz, Long> {
     fun findByStudyLogIdOrderByQueueOrder(studyLogId: Long): List<Quiz>
@@ -34,4 +35,17 @@ interface QuizRepository : JpaRepository<Quiz, Long> {
     @Modifying
     @Query("DELETE FROM Quiz q WHERE q.studyLog.id = :studyLogId")
     fun deleteByStudyLogId(studyLogId: Long): Int
+
+    /**
+     * 학습 기록 삭제 시 연관 문제를 soft-delete 처리:
+     * - study_log_id, quiz_config_id를 NULL로 설정 (FK 참조 해제)
+     * - is_active_in_queue를 false로 설정 (큐에서 제외)
+     * - QuizAttempt FK 정합성 보존을 위해 Quiz 행 자체는 유지
+     */
+    @Modifying
+    @Query("""
+        UPDATE quiz SET study_log_id = NULL, quiz_config_id = NULL, is_active_in_queue = 0
+        WHERE study_log_id = :studyLogId
+    """, nativeQuery = true)
+    fun softDeleteByStudyLogId(@Param("studyLogId") studyLogId: Long): Int
 }

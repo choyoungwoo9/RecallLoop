@@ -197,7 +197,8 @@ class QuizService(
             return existing
         }
 
-        // 2. Gemini로 생성
+        // 2. Gemini로 생성 (삭제된 기록의 문제는 변형 생성 불가)
+        if (quiz.studyLog == null) return quiz
         val generated = try {
             geminiClient.generateVariantQuiz(
                 question = quiz.question,

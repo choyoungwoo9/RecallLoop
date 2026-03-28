@@ -1,8 +1,6 @@
 package com.study.app.domain.studylog
 
 import com.study.app.domain.quiz.QuizRepository
-import com.study.app.domain.quiz.QuizAttemptHistoryRepository
-import com.study.app.domain.quiz.QuizAttemptRepository
 import com.study.app.domain.quiz.QuizConfigRepository
 import com.study.app.domain.quiz.QuizService
 import com.study.app.domain.studylog.dto.StudyLogRequest
@@ -19,8 +17,6 @@ class StudyLogService(
     private val studyLogRepository: StudyLogRepository,
     private val quizRepository: QuizRepository,
     private val quizConfigRepository: QuizConfigRepository,
-    private val quizAttemptRepository: QuizAttemptRepository,
-    private val quizAttemptHistoryRepository: QuizAttemptHistoryRepository,
     private val quizService: QuizService
 ) {
     fun create(request: StudyLogRequest): StudyLogResponse {
@@ -52,9 +48,9 @@ class StudyLogService(
             throw ResponseStatusException(HttpStatus.NOT_FOUND, "StudyLog not found: $id")
         }
 
-        quizAttemptRepository.deleteByStudyLogId(id)
-        quizAttemptHistoryRepository.deleteByStudyLogId(id)
-        quizRepository.deleteByStudyLogId(id)
+        // Quiz soft-delete: study_log_id/quiz_config_id NULL 처리 + 큐 비활성화
+        // QuizAttempt/QuizAttemptHistory는 풀이 기록 보존을 위해 삭제하지 않음
+        quizRepository.softDeleteByStudyLogId(id)
         quizConfigRepository.deleteByStudyLogId(id)
         studyLogRepository.deleteById(id)
         quizService.syncQueueState()

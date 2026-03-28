@@ -247,7 +247,7 @@ function StudyLogDetailPage() {
     setConfirmModal({
       isOpen: true,
       title: '학습 기록 삭제',
-      message: '정말 이 학습 기록을 삭제하시겠습니까? 연관된 모든 문제도 함께 삭제됩니다.',
+      message: '정말 이 학습 기록을 삭제하시겠습니까? 연관된 문제는 풀이 기록 보존을 위해 비활성화되며, 더 이상 출제되지 않습니다.',
       confirmText: '삭제',
       cancelText: '취소',
       variant: 'danger',

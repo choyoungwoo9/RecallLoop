@@ -26,8 +26,8 @@ class QueueService(
         return CurrentQuizResponse(
             id = currentQuiz.id!!,
             question = currentQuiz.question,
-            studyLogId = currentQuiz.studyLog.id!!,
-            studyLogTitle = currentQuiz.studyLog.title,
+            studyLogId = currentQuiz.studyLog?.id,
+            studyLogTitle = currentQuiz.studyLog?.title ?: "(삭제된 기록)",
             queueOrder = currentQuiz.queueOrder,
             difficulty = currentQuiz.difficulty
         )
@@ -90,9 +90,13 @@ class QueueService(
         val nextQuiz = quizRepository.findActiveByQueueOrder(nextQueueOrder).firstOrNull()
 
         // 5. 완주 감지: 현재 studyLog의 모든 문제가 현재 사이클에서 완료되었는지 확인
-        //    ⭐ 타임스탐프 비교 제거! 현재 QuizAttempt 테이블에만 있으면 현재 사이클
-        val currentStudyLogId = quiz.studyLog.id!!
-        val quizzesInCurrentStudyLog = quizRepository.findByStudyLogIdAndIsActiveInQueueTrue(currentStudyLogId)
+        //    studyLog가 null(삭제된 기록의 문제)이면 완주 감지 대상에서 제외
+        val currentStudyLogId = quiz.studyLog?.id
+        val quizzesInCurrentStudyLog = if (currentStudyLogId != null) {
+            quizRepository.findByStudyLogIdAndIsActiveInQueueTrue(currentStudyLogId)
+        } else {
+            emptyList()
+        }
 
         val completedStudyLog = if (quizzesInCurrentStudyLog.isEmpty()) {
             null
@@ -107,7 +111,7 @@ class QueueService(
             }
 
             if (allQuizzesAttempted) {
-                val studyLog = studyLogRepository.findById(currentStudyLogId)
+                val studyLog = studyLogRepository.findById(currentStudyLogId!!)
                     .orElseThrow { IllegalArgumentException("StudyLog not found") }
                 StudyLogResponse(
                     id = studyLog.id!!,
