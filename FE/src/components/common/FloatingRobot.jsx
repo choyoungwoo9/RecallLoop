@@ -3,15 +3,15 @@ import robotImage from '../../assets/alphago-robot.png'
 import './FloatingRobot.css'
 
 const DASHBOARD_SIZE = {
-  mobile: 46,
-  tablet: 60,
-  desktop: 72,
+  mobile: 72,
+  tablet: 92,
+  desktop: 112,
 }
 
 const DASHBOARD_OPACITY = {
-  mobile: 0.18,
-  tablet: 0.22,
-  desktop: 0.28,
+  mobile: 1,
+  tablet: 1,
+  desktop: 1,
 }
 
 const CINEMATIC_PATHS = {
@@ -137,6 +137,9 @@ function FloatingRobot({
   boundsRef,
   avoidSelectors = [],
   queryScope = 'container',
+  sizeMultiplier = 1,
+  speedMultiplier = 1,
+  opacityOverride = null,
   className = '',
 }) {
   const robotRef = useRef(null)
@@ -234,20 +237,20 @@ function FloatingRobot({
       metricsRef.current = {
         width: rect.width,
         height: rect.height,
-        size,
+        size: size * sizeMultiplier,
         avoidRects,
       }
 
-      element.style.width = `${size}px`
-      element.style.opacity = `${opacity}`
+      element.style.width = `${size * sizeMultiplier}px`
+      element.style.opacity = `${opacityOverride ?? opacity}`
     }
 
     const initializeDashboardState = () => {
       refreshMetrics()
       const { width, height, size } = metricsRef.current
       const { speedRange } = getDashboardRobotSpec()
-      const speedX = randomBetween(...speedRange) * (Math.random() > 0.5 ? 1 : -1)
-      const speedY = randomBetween(...speedRange) * (Math.random() > 0.5 ? 1 : -1)
+      const speedX = randomBetween(...speedRange) * speedMultiplier * (Math.random() > 0.5 ? 1 : -1)
+      const speedY = randomBetween(...speedRange) * speedMultiplier * (Math.random() > 0.5 ? 1 : -1)
 
       stateRef.current = {
         x: randomBetween(12, Math.max(12, width - size - 12)),
@@ -378,7 +381,7 @@ function FloatingRobot({
       window.removeEventListener('scroll', handleScroll)
       resizeObserverRef.current?.disconnect()
     }
-  }, [active, avoidSelectorKey, boundsRef, canClose, phase, queryScope, variant])
+  }, [active, avoidSelectorKey, boundsRef, canClose, opacityOverride, phase, queryScope, sizeMultiplier, speedMultiplier, variant])
 
   return (
     <img

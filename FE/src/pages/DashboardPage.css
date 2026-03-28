@@ -20,6 +20,18 @@
   z-index: 3;
 }
 
+.dashboard__floating-robot--alpha {
+  z-index: 3;
+}
+
+.dashboard__floating-robot--beta {
+  z-index: 4;
+}
+
+.dashboard__floating-robot--gamma {
+  z-index: 5;
+}
+
 .dashboard > section {
   position: relative;
   z-index: 2;
