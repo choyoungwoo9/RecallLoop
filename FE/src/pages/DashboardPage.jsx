@@ -90,7 +90,7 @@ function DashboardPage() {
         <FloatingRobot
           variant="dashboard"
           boundsRef={dashboardRef}
-          avoidSelectors={['.dashboard__cycle-actions', '.dashboard__toplogs', '.dashboard__cta-actions']}
+          avoidSelectors={['.dashboard__hero', '.dashboard__summary-card', '.dashboard__panel']}
           className="dashboard__floating-robot"
         />
 

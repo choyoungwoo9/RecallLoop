@@ -111,6 +111,15 @@ function convertRectToLocal(rect, containerRect) {
   }
 }
 
+function expandRect(rect, padding, maxWidth, maxHeight) {
+  return {
+    left: clamp(rect.left - padding, 0, maxWidth),
+    top: clamp(rect.top - padding, 0, maxHeight),
+    right: clamp(rect.right + padding, 0, maxWidth),
+    bottom: clamp(rect.bottom + padding, 0, maxHeight),
+  }
+}
+
 function overlaps(rectA, rectB) {
   return !(
     rectA.right <= rectB.left ||
@@ -218,6 +227,7 @@ function FloatingRobot({
         .map((node) => node.getBoundingClientRect())
         .filter((rectItem) => rectItem.width > 0 && rectItem.height > 0)
         .map((rectItem) => convertRectToLocal(rectItem, rect))
+        .map((rectItem) => expandRect(rectItem, 10, rect.width, rect.height))
 
       metricsRef.current = {
         width: rect.width,

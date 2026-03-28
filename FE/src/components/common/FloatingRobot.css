@@ -9,9 +9,9 @@
 }
 
 .floating-robot--dashboard {
-  z-index: 2;
+  z-index: 4;
   opacity: 0.24;
-  filter: drop-shadow(0 8px 18px rgba(21, 73, 129, 0.14));
+  filter: drop-shadow(0 10px 20px rgba(21, 73, 129, 0.18));
 }
 
 .floating-robot--cinematic {
