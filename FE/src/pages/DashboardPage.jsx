@@ -90,32 +90,18 @@ function DashboardPage() {
         <FloatingRobot
           variant="dashboard"
           boundsRef={sceneRef}
-          avoidSelectors={['.layout__header', '.layout__main']}
-          queryScope="document"
-          sizeMultiplier={1.08}
-          speedMultiplier={0.86}
+          sizeMultiplier={0.94}
+          speedMultiplier={0.96}
           opacityOverride={1}
           className="dashboard__floating-robot dashboard__floating-robot--alpha"
         />
         <FloatingRobot
           variant="dashboard"
           boundsRef={sceneRef}
-          avoidSelectors={['.layout__header', '.layout__main']}
-          queryScope="document"
-          sizeMultiplier={0.96}
-          speedMultiplier={0.72}
+          sizeMultiplier={0.82}
+          speedMultiplier={1.08}
           opacityOverride={1}
           className="dashboard__floating-robot dashboard__floating-robot--beta"
-        />
-        <FloatingRobot
-          variant="dashboard"
-          boundsRef={sceneRef}
-          avoidSelectors={['.layout__header', '.layout__main']}
-          queryScope="document"
-          sizeMultiplier={1.14}
-          speedMultiplier={0.94}
-          opacityOverride={1}
-          className="dashboard__floating-robot dashboard__floating-robot--gamma"
         />
       </div>
 

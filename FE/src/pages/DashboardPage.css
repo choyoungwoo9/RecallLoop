@@ -28,10 +28,6 @@
   z-index: 4;
 }
 
-.dashboard__floating-robot--gamma {
-  z-index: 5;
-}
-
 .dashboard > section {
   position: relative;
   z-index: 2;

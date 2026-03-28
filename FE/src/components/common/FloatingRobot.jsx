@@ -3,9 +3,9 @@ import robotImage from '../../assets/alphago-robot.png'
 import './FloatingRobot.css'
 
 const DASHBOARD_SIZE = {
-  mobile: 72,
-  tablet: 92,
-  desktop: 112,
+  mobile: 64,
+  tablet: 80,
+  desktop: 96,
 }
 
 const DASHBOARD_OPACITY = {
@@ -84,49 +84,44 @@ function interpolateFrame(frames, progress) {
 
 function getDashboardRobotSpec() {
   if (typeof window === 'undefined') {
-    return { size: DASHBOARD_SIZE.desktop, opacity: DASHBOARD_OPACITY.desktop, speedRange: [0.08, 0.14] }
+    return { size: DASHBOARD_SIZE.desktop, opacity: DASHBOARD_OPACITY.desktop, speedRange: [0.045, 0.07] }
   }
 
   if (window.innerWidth <= 640) {
-    return { size: DASHBOARD_SIZE.mobile, opacity: DASHBOARD_OPACITY.mobile, speedRange: [0.04, 0.07] }
+    return { size: DASHBOARD_SIZE.mobile, opacity: DASHBOARD_OPACITY.mobile, speedRange: [0.025, 0.04] }
   }
 
   if (window.innerWidth <= 1024) {
-    return { size: DASHBOARD_SIZE.tablet, opacity: DASHBOARD_OPACITY.tablet, speedRange: [0.06, 0.1] }
+    return { size: DASHBOARD_SIZE.tablet, opacity: DASHBOARD_OPACITY.tablet, speedRange: [0.035, 0.055] }
   }
 
-  return { size: DASHBOARD_SIZE.desktop, opacity: DASHBOARD_OPACITY.desktop, speedRange: [0.08, 0.14] }
+  return { size: DASHBOARD_SIZE.desktop, opacity: DASHBOARD_OPACITY.desktop, speedRange: [0.045, 0.07] }
 }
 
 function randomBetween(min, max) {
   return min + Math.random() * (max - min)
 }
 
-function convertRectToLocal(rect, containerRect) {
-  return {
-    left: rect.left - containerRect.left,
-    top: rect.top - containerRect.top,
-    right: rect.right - containerRect.left,
-    bottom: rect.bottom - containerRect.top,
-  }
-}
+function createDashboardVelocity(speedRange, speedMultiplier, constraints = {}) {
+  const speed = randomBetween(...speedRange) * speedMultiplier
 
-function expandRect(rect, padding, maxWidth, maxHeight) {
-  return {
-    left: clamp(rect.left - padding, 0, maxWidth),
-    top: clamp(rect.top - padding, 0, maxHeight),
-    right: clamp(rect.right + padding, 0, maxWidth),
-    bottom: clamp(rect.bottom + padding, 0, maxHeight),
-  }
-}
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    const angle = randomBetween(0, Math.PI * 2)
+    const vx = Math.cos(angle) * speed
+    const vy = Math.sin(angle) * speed
 
-function overlaps(rectA, rectB) {
-  return !(
-    rectA.right <= rectB.left ||
-    rectA.left >= rectB.right ||
-    rectA.bottom <= rectB.top ||
-    rectA.top >= rectB.bottom
-  )
+    if (constraints.minX != null && vx < constraints.minX) continue
+    if (constraints.maxX != null && vx > constraints.maxX) continue
+    if (constraints.minY != null && vy < constraints.minY) continue
+    if (constraints.maxY != null && vy > constraints.maxY) continue
+
+    return { vx, vy }
+  }
+
+  return {
+    vx: constraints.minX != null ? Math.max(constraints.minX, speed * 0.65) : speed * 0.65,
+    vy: constraints.minY != null ? Math.max(constraints.minY, speed * 0.35) : speed * 0.35,
+  }
 }
 
 function FloatingRobot({
@@ -145,11 +140,10 @@ function FloatingRobot({
   const robotRef = useRef(null)
   const animationFrameRef = useRef(0)
   const stateRef = useRef(null)
-  const metricsRef = useRef({ width: 0, height: 0, size: 0, avoidRects: [] })
+  const metricsRef = useRef({ width: 0, height: 0, size: 0 })
   const resizeObserverRef = useRef(null)
   const scrollDebounceRef = useRef(0)
   const reducedMotionRef = useRef(false)
-  const avoidSelectorKey = avoidSelectors.join('|')
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -226,19 +220,11 @@ function FloatingRobot({
     const refreshMetrics = () => {
       const rect = container.getBoundingClientRect()
       const { size, opacity } = getDashboardRobotSpec()
-      const queryRoot = queryScope === 'document' ? document : container
-      const avoidRects = avoidSelectors
-        .flatMap((selector) => Array.from(queryRoot.querySelectorAll(selector)))
-        .map((node) => node.getBoundingClientRect())
-        .filter((rectItem) => rectItem.width > 0 && rectItem.height > 0)
-        .map((rectItem) => convertRectToLocal(rectItem, rect))
-        .map((rectItem) => expandRect(rectItem, 22, rect.width, rect.height))
 
       metricsRef.current = {
         width: rect.width,
         height: rect.height,
         size: size * sizeMultiplier,
-        avoidRects,
       }
 
       element.style.width = `${size * sizeMultiplier}px`
@@ -249,17 +235,14 @@ function FloatingRobot({
       refreshMetrics()
       const { width, height, size } = metricsRef.current
       const { speedRange } = getDashboardRobotSpec()
-      const speedX = randomBetween(...speedRange) * speedMultiplier * (Math.random() > 0.5 ? 1 : -1)
-      const speedY = randomBetween(...speedRange) * speedMultiplier * (Math.random() > 0.5 ? 1 : -1)
+      const { vx, vy } = createDashboardVelocity(speedRange, speedMultiplier)
 
       stateRef.current = {
         x: randomBetween(12, Math.max(12, width - size - 12)),
         y: randomBetween(12, Math.max(12, height - size - 12)),
-        vx: speedX,
-        vy: speedY,
-        angleBias: randomBetween(-2.4, 2.4),
+        vx,
+        vy,
         lastTime: performance.now(),
-        nextBiasAt: performance.now() + randomBetween(2500, 4000),
       }
     }
 
@@ -286,7 +269,7 @@ function FloatingRobot({
 
     const animateDashboard = (now) => {
       const robotState = stateRef.current
-      const { width, height, size, avoidRects } = metricsRef.current
+      const { width, height, size } = metricsRef.current
 
       if (!robotState || width === 0 || height === 0) {
         animationFrameRef.current = window.requestAnimationFrame(animateDashboard)
@@ -310,56 +293,36 @@ function FloatingRobot({
       const delta = clamp(now - robotState.lastTime, 8, 40)
       robotState.lastTime = now
 
-      if (now >= robotState.nextBiasAt) {
-        robotState.vx += randomBetween(-0.02, 0.02)
-        robotState.vy += randomBetween(-0.02, 0.02)
-        robotState.angleBias = randomBetween(-2.2, 2.2)
-        robotState.nextBiasAt = now + randomBetween(3200, 5200)
-      }
-
       robotState.x += robotState.vx * delta
       robotState.y += robotState.vy * delta
 
-      if (robotState.x <= 8 || robotState.x >= width - size - 8) {
-        robotState.vx *= -1
+      let nextDirectionConstraints = null
+
+      if (robotState.x <= 8) {
         robotState.x = clamp(robotState.x, 8, Math.max(8, width - size - 8))
+        nextDirectionConstraints = { ...(nextDirectionConstraints ?? {}), minX: 0.02 }
+      } else if (robotState.x >= width - size - 8) {
+        robotState.x = clamp(robotState.x, 8, Math.max(8, width - size - 8))
+        nextDirectionConstraints = { ...(nextDirectionConstraints ?? {}), maxX: -0.02 }
       }
 
-      if (robotState.y <= 8 || robotState.y >= height - size - 8) {
-        robotState.vy *= -1
+      if (robotState.y <= 8) {
         robotState.y = clamp(robotState.y, 8, Math.max(8, height - size - 8))
+        nextDirectionConstraints = { ...(nextDirectionConstraints ?? {}), minY: 0.02 }
+      } else if (robotState.y >= height - size - 8) {
+        robotState.y = clamp(robotState.y, 8, Math.max(8, height - size - 8))
+        nextDirectionConstraints = { ...(nextDirectionConstraints ?? {}), maxY: -0.02 }
       }
 
-      const robotRect = {
-        left: robotState.x,
-        top: robotState.y,
-        right: robotState.x + size,
-        bottom: robotState.y + size,
+      if (nextDirectionConstraints) {
+        const { speedRange } = getDashboardRobotSpec()
+        const { vx, vy } = createDashboardVelocity(speedRange, speedMultiplier, nextDirectionConstraints)
+        robotState.vx = vx
+        robotState.vy = vy
       }
-
-      avoidRects.forEach((avoidRect) => {
-        if (!overlaps(robotRect, avoidRect)) {
-          return
-        }
-
-        const overlapX = Math.min(robotRect.right, avoidRect.right) - Math.max(robotRect.left, avoidRect.left)
-        const overlapY = Math.min(robotRect.bottom, avoidRect.bottom) - Math.max(robotRect.top, avoidRect.top)
-        const pushDistance = randomBetween(14, 28)
-
-        if (overlapX < overlapY) {
-          robotState.vx *= -1
-          robotState.x += robotState.x < avoidRect.left ? -pushDistance : pushDistance
-        } else {
-          robotState.vy *= -1
-          robotState.y += robotState.y < avoidRect.top ? -pushDistance : pushDistance
-        }
-
-        robotState.vx += randomBetween(-0.02, 0.02)
-        robotState.vy += randomBetween(-0.02, 0.02)
-      })
 
       const flip = robotState.vx < 0
-      const rotate = clamp((robotState.vx + robotState.vy) * 8 + robotState.angleBias, -8, 8)
+      const rotate = clamp((robotState.vx + robotState.vy) * 18, -6, 6)
 
       setTransform({
         x: clamp(robotState.x, 8, Math.max(8, width - size - 8)),
@@ -381,7 +344,7 @@ function FloatingRobot({
       window.removeEventListener('scroll', handleScroll)
       resizeObserverRef.current?.disconnect()
     }
-  }, [active, avoidSelectorKey, boundsRef, canClose, opacityOverride, phase, queryScope, sizeMultiplier, speedMultiplier, variant])
+  }, [active, boundsRef, canClose, opacityOverride, phase, queryScope, sizeMultiplier, speedMultiplier, variant])
 
   return (
     <img
