@@ -10,8 +10,12 @@
 
 .floating-robot--dashboard {
   z-index: 4;
-  opacity: 0.24;
-  filter: drop-shadow(0 10px 20px rgba(21, 73, 129, 0.18));
+  opacity: 0.5;
+  filter:
+    drop-shadow(0 12px 22px rgba(21, 73, 129, 0.24))
+    drop-shadow(0 0 10px rgba(255, 255, 255, 0.22))
+    contrast(1.08)
+    brightness(1.06);
 }
 
 .floating-robot--cinematic {

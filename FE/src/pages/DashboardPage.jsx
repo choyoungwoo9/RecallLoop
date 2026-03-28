@@ -43,7 +43,7 @@ function DashboardPage() {
   const [dashboard, setDashboard] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const dashboardRef = useRef(null)
+  const sceneRef = useRef(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -86,13 +86,17 @@ function DashboardPage() {
 
   return (
     <Layout>
-      <div className="dashboard" ref={dashboardRef}>
+      <div className="dashboard__robot-scene" ref={sceneRef} aria-hidden="true">
         <FloatingRobot
           variant="dashboard"
-          boundsRef={dashboardRef}
-          avoidSelectors={['.dashboard__hero', '.dashboard__summary-card', '.dashboard__panel']}
+          boundsRef={sceneRef}
+          avoidSelectors={['.layout__header', '.layout__main']}
+          queryScope="document"
           className="dashboard__floating-robot"
         />
+      </div>
+
+      <div className="dashboard">
 
         <section className="dashboard__hero">
           <div className="dashboard__hero-copy">

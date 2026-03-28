@@ -1,3 +1,11 @@
+.dashboard__robot-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+
 .dashboard {
   position: relative;
   display: flex;
@@ -9,7 +17,7 @@
 }
 
 .dashboard__floating-robot {
-  z-index: 4;
+  z-index: 3;
 }
 
 .dashboard > section {

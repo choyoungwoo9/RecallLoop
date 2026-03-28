@@ -84,18 +84,18 @@ function interpolateFrame(frames, progress) {
 
 function getDashboardRobotSpec() {
   if (typeof window === 'undefined') {
-    return { size: DASHBOARD_SIZE.desktop, opacity: DASHBOARD_OPACITY.desktop, speedRange: [0.22, 0.38] }
+    return { size: DASHBOARD_SIZE.desktop, opacity: DASHBOARD_OPACITY.desktop, speedRange: [0.08, 0.14] }
   }
 
   if (window.innerWidth <= 640) {
-    return { size: DASHBOARD_SIZE.mobile, opacity: DASHBOARD_OPACITY.mobile, speedRange: [0.12, 0.2] }
+    return { size: DASHBOARD_SIZE.mobile, opacity: DASHBOARD_OPACITY.mobile, speedRange: [0.04, 0.07] }
   }
 
   if (window.innerWidth <= 1024) {
-    return { size: DASHBOARD_SIZE.tablet, opacity: DASHBOARD_OPACITY.tablet, speedRange: [0.18, 0.28] }
+    return { size: DASHBOARD_SIZE.tablet, opacity: DASHBOARD_OPACITY.tablet, speedRange: [0.06, 0.1] }
   }
 
-  return { size: DASHBOARD_SIZE.desktop, opacity: DASHBOARD_OPACITY.desktop, speedRange: [0.22, 0.38] }
+  return { size: DASHBOARD_SIZE.desktop, opacity: DASHBOARD_OPACITY.desktop, speedRange: [0.08, 0.14] }
 }
 
 function randomBetween(min, max) {
@@ -136,6 +136,7 @@ function FloatingRobot({
   canClose = false,
   boundsRef,
   avoidSelectors = [],
+  queryScope = 'container',
   className = '',
 }) {
   const robotRef = useRef(null)
@@ -222,12 +223,13 @@ function FloatingRobot({
     const refreshMetrics = () => {
       const rect = container.getBoundingClientRect()
       const { size, opacity } = getDashboardRobotSpec()
+      const queryRoot = queryScope === 'document' ? document : container
       const avoidRects = avoidSelectors
-        .flatMap((selector) => Array.from(container.querySelectorAll(selector)))
+        .flatMap((selector) => Array.from(queryRoot.querySelectorAll(selector)))
         .map((node) => node.getBoundingClientRect())
         .filter((rectItem) => rectItem.width > 0 && rectItem.height > 0)
         .map((rectItem) => convertRectToLocal(rectItem, rect))
-        .map((rectItem) => expandRect(rectItem, 10, rect.width, rect.height))
+        .map((rectItem) => expandRect(rectItem, 22, rect.width, rect.height))
 
       metricsRef.current = {
         width: rect.width,
@@ -290,7 +292,7 @@ function FloatingRobot({
 
       if (reducedMotionRef.current) {
         const x = Math.max(12, width - size - 18)
-        const y = 18 + Math.sin(now / 900) * 8
+        const y = 18 + Math.sin(now / 1400) * 6
         setTransform({
           x,
           y,
@@ -306,10 +308,10 @@ function FloatingRobot({
       robotState.lastTime = now
 
       if (now >= robotState.nextBiasAt) {
-        robotState.vx += randomBetween(-0.06, 0.06)
-        robotState.vy += randomBetween(-0.06, 0.06)
-        robotState.angleBias = randomBetween(-3.2, 3.2)
-        robotState.nextBiasAt = now + randomBetween(2500, 4000)
+        robotState.vx += randomBetween(-0.02, 0.02)
+        robotState.vy += randomBetween(-0.02, 0.02)
+        robotState.angleBias = randomBetween(-2.2, 2.2)
+        robotState.nextBiasAt = now + randomBetween(3200, 5200)
       }
 
       robotState.x += robotState.vx * delta
@@ -339,7 +341,7 @@ function FloatingRobot({
 
         const overlapX = Math.min(robotRect.right, avoidRect.right) - Math.max(robotRect.left, avoidRect.left)
         const overlapY = Math.min(robotRect.bottom, avoidRect.bottom) - Math.max(robotRect.top, avoidRect.top)
-        const pushDistance = randomBetween(8, 20)
+        const pushDistance = randomBetween(14, 28)
 
         if (overlapX < overlapY) {
           robotState.vx *= -1
@@ -349,8 +351,8 @@ function FloatingRobot({
           robotState.y += robotState.y < avoidRect.top ? -pushDistance : pushDistance
         }
 
-        robotState.vx += randomBetween(-0.05, 0.05)
-        robotState.vy += randomBetween(-0.05, 0.05)
+        robotState.vx += randomBetween(-0.02, 0.02)
+        robotState.vy += randomBetween(-0.02, 0.02)
       })
 
       const flip = robotState.vx < 0
@@ -376,7 +378,7 @@ function FloatingRobot({
       window.removeEventListener('scroll', handleScroll)
       resizeObserverRef.current?.disconnect()
     }
-  }, [active, avoidSelectorKey, boundsRef, canClose, phase, variant])
+  }, [active, avoidSelectorKey, boundsRef, canClose, phase, queryScope, variant])
 
   return (
     <img
