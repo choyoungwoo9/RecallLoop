@@ -1,10 +1,14 @@
-import { Link, useLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { logout } from '../../api/auth'
 import logo from '../../assets/logo.svg'
 import { HomeIcon, QuizIcon, HistoryIcon, BookIcon } from './Icons'
 import './Layout.css'
 
 function Layout({ children }) {
   const location = useLocation()
+  const navigate = useNavigate()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const isActive = (path) => {
     if (path === '/') {
@@ -12,6 +16,17 @@ function Layout({ children }) {
     }
 
     return location.pathname === path || location.pathname.startsWith(`${path}/`)
+  }
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+
+    try {
+      await logout()
+    } finally {
+      navigate('/login', { replace: true })
+      setIsLoggingOut(false)
+    }
   }
 
   return (
@@ -63,6 +78,15 @@ function Layout({ children }) {
               </li>
             </ul>
           </nav>
+
+          <button
+            type="button"
+            className="layout__logout-button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+          </button>
         </div>
       </header>
 

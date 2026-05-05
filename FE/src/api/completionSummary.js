@@ -1,8 +1,8 @@
-import axios from 'axios'
+import apiClient from './apiClient'
 
 export const getCompletionSummary = (studyLogId) =>
-  axios.get(`/api/study-logs/${studyLogId}/completion-summary`).then(r => r.data)
+  apiClient.get(`/api/study-logs/${studyLogId}/completion-summary`).then(r => r.data)
 
 export const saveCompletionSummaryEvaluation = (studyLogId, payload) =>
-  axios.patch(`/api/study-logs/${studyLogId}/completion-summary/evaluation`, payload)
+  apiClient.patch(`/api/study-logs/${studyLogId}/completion-summary/evaluation`, payload)
     .then(r => r.data)

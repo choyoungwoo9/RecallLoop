@@ -1,6 +1,7 @@
 package com.study.app.config
 
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.ApplicationListener
 import org.springframework.jdbc.core.JdbcTemplate
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional
  * quiz 테이블의 study_log_id, quiz_config_id 컬럼을 NULL 허용으로 변경 (학습 기록 삭제 시 soft-delete 지원)
  */
 @Component
+@ConditionalOnProperty(name = ["app.db.migration.enabled"], havingValue = "true", matchIfMissing = true)
 class DatabaseMigration(
     private val jdbcTemplate: JdbcTemplate
 ) : ApplicationListener<ApplicationReadyEvent> {

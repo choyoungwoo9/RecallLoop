@@ -1,7 +1,7 @@
-import axios from 'axios'
+import apiClient from './apiClient'
 
 export const getQuizzesByStudyLog = (studyLogId) =>
-  axios.get(`/api/study-logs/${studyLogId}/quizzes`).then(r => r.data)
+  apiClient.get(`/api/study-logs/${studyLogId}/quizzes`).then(r => r.data)
 
 export const deleteQuiz = (id) =>
-  axios.delete(`/api/quizzes/${id}`).then(r => r.data)
+  apiClient.delete(`/api/quizzes/${id}`).then(r => r.data)

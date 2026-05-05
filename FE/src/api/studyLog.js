@@ -1,8 +1,8 @@
-import axios from 'axios'
+import apiClient from './apiClient'
 
 const BASE = '/api/study-logs'
 
-export const getStudyLogs = () => axios.get(BASE).then(r => r.data)
-export const getStudyLog = (id) => axios.get(`${BASE}/${id}`).then(r => r.data)
-export const createStudyLog = (data) => axios.post(BASE, data).then(r => r.data)
-export const deleteStudyLog = (id) => axios.delete(`${BASE}/${id}`).then(r => r.data)
+export const getStudyLogs = () => apiClient.get(BASE).then(r => r.data)
+export const getStudyLog = (id) => apiClient.get(`${BASE}/${id}`).then(r => r.data)
+export const createStudyLog = (data) => apiClient.post(BASE, data).then(r => r.data)
+export const deleteStudyLog = (id) => apiClient.delete(`${BASE}/${id}`).then(r => r.data)

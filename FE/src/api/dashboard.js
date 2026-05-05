@@ -1,4 +1,4 @@
-import axios from 'axios'
+import apiClient from './apiClient'
 
 export const getDashboard = () =>
-  axios.get('/api/dashboard').then(r => r.data)
+  apiClient.get('/api/dashboard').then(r => r.data)

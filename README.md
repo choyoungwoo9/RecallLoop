@@ -107,8 +107,9 @@ cd recall-loop
 ```bash
 cd BE
 
-# 환경변수 설정
+# 환경변수 설정 (.env 또는 export)
 export GEMINI_API_KEY="your-gemini-api-key"
+export APP_ACCESS_CODE="your-private-access-code"
 
 # 빌드
 ./gradlew build
@@ -132,6 +133,8 @@ npm run dev
 ```
 http://localhost:5173
 ```
+
+브라우저에 접속하면 먼저 로그인 화면이 보입니다. `BE/.env` 또는 셸 환경변수에 넣은 `APP_ACCESS_CODE` 값을 입력해야 앱에 들어갈 수 있습니다.
 
 ---
 

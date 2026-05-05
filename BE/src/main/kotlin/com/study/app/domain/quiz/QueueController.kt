@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/queue")
-@CrossOrigin(origins = ["http://localhost:5173"])
 @Tag(name = "Queue", description = "퀴즈 풀이 큐 상태 및 제출 API")
 class QueueController(
     private val queueService: QueueService

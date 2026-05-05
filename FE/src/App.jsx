@@ -6,18 +6,23 @@ import StudyLogDetailPage from './pages/StudyLogDetailPage'
 import QueueStatusPage from './pages/QueueStatusPage'
 import QuizSolvePage from './pages/QuizSolvePage'
 import AttemptHistoryPage from './pages/AttemptHistoryPage'
+import LoginPage from './pages/LoginPage'
+import RequireAuth from './components/auth/RequireAuth'
 import './App.css'
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<DashboardPage />} />
-      <Route path="/study-logs" element={<StudyLogListPage />} />
-      <Route path="/study-logs/new" element={<StudyLogCreatePage />} />
-      <Route path="/study-logs/:id" element={<StudyLogDetailPage />} />
-      <Route path="/queue" element={<QueueStatusPage />} />
-      <Route path="/queue/solve" element={<QuizSolvePage />} />
-      <Route path="/history" element={<AttemptHistoryPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<RequireAuth />}>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/study-logs" element={<StudyLogListPage />} />
+        <Route path="/study-logs/new" element={<StudyLogCreatePage />} />
+        <Route path="/study-logs/:id" element={<StudyLogDetailPage />} />
+        <Route path="/queue" element={<QueueStatusPage />} />
+        <Route path="/queue/solve" element={<QuizSolvePage />} />
+        <Route path="/history" element={<AttemptHistoryPage />} />
+      </Route>
     </Routes>
   )
 }

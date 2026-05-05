@@ -1,5 +1,5 @@
-import axios from 'axios'
+import apiClient from './apiClient'
 
 export const getAttemptHistory = (studyLogId = null) =>
-  axios.get('/api/attempts', { params: studyLogId ? { studyLogId } : {} })
+  apiClient.get('/api/attempts', { params: studyLogId ? { studyLogId } : {} })
     .then(r => r.data)
